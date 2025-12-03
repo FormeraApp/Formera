@@ -102,7 +102,7 @@ func Load() *Config {
 	baseURL := getEnv("BASE_URL", "http://localhost:3000")
 	apiURL := getEnv("API_URL", "http://localhost:"+port+"/api")
 
-	// CORS_ORIGIN defaults to SITE_URL if not set (same-origin deployment)
+	// CORS_ORIGIN defaults to BASE_URL if not set (same-origin deployment)
 	corsOrigin := getEnv("CORS_ORIGIN", "")
 	if corsOrigin == "" {
 		corsOrigin = baseURL
