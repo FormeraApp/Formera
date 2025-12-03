@@ -1,0 +1,611 @@
+{
+	"common": {
+		"save": "Speichern",
+		"cancel": "Abbrechen",
+		"delete": "Löschen",
+		"edit": "Bearbeiten",
+		"back": "Zurück",
+		"loading": "Laden...",
+		"error": "Fehler",
+		"success": "Erfolg",
+		"confirm": "Bestätigen",
+		"close": "Schließen",
+		"done": "Fertig",
+		"add": "Hinzufügen",
+		"remove": "Entfernen",
+		"search": "Suchen",
+		"noResults": "Keine Ergebnisse gefunden",
+		"you": "Sie"
+	},
+	"auth": {
+		"login": "Anmelden",
+		"logout": "Abmelden",
+		"register": "Registrieren",
+		"email": "E-Mail",
+		"password": "Passwort",
+		"confirmPassword": "Passwort bestätigen",
+		"name": "Name",
+		"welcomeBack": "Willkommen zurück bei",
+		"createAccount": "Erstellen Sie Ihr Konto",
+		"invalidCredentials": "Ungültige E-Mail oder Passwort",
+		"passwordMismatch": "Passwörter stimmen nicht überein",
+		"passwordMinLength": "Passwort muss mindestens 8 Zeichen lang sein",
+		"registrationFailed": "Registrierung fehlgeschlagen. E-Mail bereits vergeben?",
+		"loggingIn": "Wird angemeldet...",
+		"registering": "Wird registriert...",
+		"noAccount": "Noch kein Konto?",
+		"hasAccount": "Bereits ein Konto?",
+		"registerNow": "Jetzt registrieren",
+		"loginNow": "Jetzt anmelden",
+		"registrationDisabled": "Registrierung deaktiviert",
+		"registrationNotAvailable": "Die öffentliche Registrierung ist derzeit nicht verfügbar.",
+		"emailPlaceholder": "ihre{'@'}email.de",
+		"passwordPlaceholder": "Ihr Passwort",
+		"namePlaceholder": "Ihr Name",
+		"minCharsPlaceholder": "Mindestens 8 Zeichen",
+		"repeatPasswordPlaceholder": "Passwort wiederholen"
+	},
+	"nav": {
+		"forms": "Formulare",
+		"settings": "Einstellungen"
+	},
+	"settings": {
+		"title": "Einstellungen",
+		"description": "Verwalten Sie Ihre Anwendungseinstellungen",
+		"saved": "Einstellungen gespeichert",
+		"saveError": "Fehler beim Speichern",
+		"loadingSettings": "Einstellungen werden geladen...",
+		"loadError": "Einstellungen konnten nicht geladen werden.",
+		"tabs": {
+			"general": "Allgemein",
+			"design": "Design",
+			"footer": "Footer Links",
+			"users": "Benutzer"
+		},
+		"general": {
+			"application": "Anwendung",
+			"appName": "App-Name",
+			"appNameHint": "Der Name wird im Header und Footer angezeigt.",
+			"security": "Sicherheit",
+			"allowRegistration": "Öffentliche Registrierung erlauben",
+			"allowRegistrationHint": "Wenn deaktiviert, können sich keine neuen Benutzer selbst registrieren."
+		},
+		"design": {
+			"colors": "Farben",
+			"primaryColor": "Primärfarbe",
+			"primaryColorHint": "Wird für Buttons, Links und Akzente verwendet.",
+			"preview": "Vorschau",
+			"button": "Button",
+			"link": "Link",
+			"branding": "Branding",
+			"logo": "Logo",
+			"logoHint": "Das Logo wird im Header angezeigt. Empfohlen: 200x50px, PNG oder SVG.",
+			"uploadLogo": "Logo hochladen",
+			"removeLogo": "Logo entfernen",
+			"showAppName": "App-Name neben Logo anzeigen",
+			"uploading": "Wird hochgeladen...",
+			"uploadError": "Fehler beim Hochladen",
+			"favicon": "Favicon",
+			"faviconHint": "Das Favicon wird im Browser-Tab angezeigt. Empfohlen: 32x32px oder 64x64px, PNG oder ICO.",
+			"uploadFavicon": "Favicon hochladen",
+			"removeFavicon": "Favicon entfernen",
+			"loginPage": "Login-Seite",
+			"backgroundImage": "Hintergrundbild",
+			"backgroundImageHint": "Das Hintergrundbild wird auf der Login- und Registrierungsseite angezeigt. Empfohlen: Mindestens 1920x1080px, JPG oder PNG.",
+			"uploadBackground": "Hintergrundbild hochladen",
+			"removeBackground": "Hintergrund entfernen",
+			"noBackgroundHint": "Ohne Hintergrundbild wird ein Farbverlauf angezeigt."
+		},
+		"footer": {
+			"title": "Footer Links",
+			"description": "Fügen Sie Links hinzu, die im Footer angezeigt werden (z.B. Datenschutz, Impressum).",
+			"noLinks": "Keine Footer Links vorhanden",
+			"addLink": "Link hinzufügen",
+			"removeLink": "Link entfernen",
+			"labelPlaceholder": "Bezeichnung (z.B. Datenschutz)",
+			"urlPlaceholder": "URL (z.B. https://example.com/datenschutz)"
+		},
+		"users": {
+			"title": "Benutzer verwalten",
+			"addUser": "Benutzer hinzufügen",
+			"loadingUsers": "Benutzer werden geladen...",
+			"noUsers": "Keine Benutzer gefunden",
+			"createdAt": "Erstellt am",
+			"editUser": "Bearbeiten",
+			"deleteUser": "Löschen",
+			"admin": "Admin",
+			"user": "Benutzer",
+			"createUser": "Neuen Benutzer erstellen",
+			"editUserTitle": "Benutzer bearbeiten",
+			"nameEmailRequired": "Name und E-Mail sind erforderlich",
+			"passwordRequired": "Passwort ist für neue Benutzer erforderlich",
+			"userUpdated": "Benutzer aktualisiert",
+			"userCreated": "Benutzer erstellt",
+			"userDeleted": "Benutzer gelöscht",
+			"cannotDeleteSelf": "Sie können sich nicht selbst löschen",
+			"confirmDelete": "Möchten Sie den Benutzer \"{name}\" wirklich löschen?",
+			"role": "Rolle",
+			"roleHint": "Administratoren haben Zugriff auf Einstellungen und Benutzerverwaltung.",
+			"leaveEmptyToKeep": "(leer lassen um beizubehalten)",
+			"administrator": "Administrator"
+		}
+	},
+	"forms": {
+		"title": "Formulare",
+		"subtitle": "Erstellen und verwalten Sie Ihre Formulare",
+		"newForm": "Neues Formular",
+		"loading": "Formulare werden geladen...",
+		"empty": {
+			"title": "Keine Formulare vorhanden",
+			"description": "Erstellen Sie Ihr erstes Formular und beginnen Sie, Daten zu sammeln.",
+			"button": "Erstes Formular erstellen"
+		},
+		"stats": {
+			"total": "Gesamt",
+			"published": "Veröffentlicht",
+			"drafts": "Entwürfe",
+			"responses": "Antworten"
+		},
+		"search": {
+			"placeholder": "Formulare durchsuchen...",
+			"results": "{count} Ergebnis | {count} Ergebnisse",
+			"clearFilters": "Filter zurücksetzen",
+			"noResults": "Keine Formulare gefunden",
+			"noResultsHint": "Versuchen Sie andere Suchbegriffe oder Filter."
+		},
+		"filter": {
+			"allStatus": "Alle Status",
+			"published": "Veröffentlicht",
+			"draft": "Entwurf",
+			"closed": "Geschlossen"
+		},
+		"sort": {
+			"lastEdited": "Zuletzt bearbeitet",
+			"createdAt": "Erstellungsdatum",
+			"alphabetical": "Alphabetisch"
+		},
+		"status": {
+			"published": "Veröffentlicht",
+			"draft": "Entwurf",
+			"closed": "Geschlossen"
+		},
+		"card": {
+			"untitled": "Unbenanntes Formular",
+			"noDescription": "Keine Beschreibung",
+			"fields": "{count} Felder",
+			"responses": "{count} Antworten"
+		},
+		"menu": {
+			"edit": "Bearbeiten",
+			"responses": "Antworten",
+			"copyLink": "Link kopieren",
+			"open": "Öffnen",
+			"duplicate": "Duplizieren",
+			"delete": "Löschen"
+		},
+		"date": {
+			"today": "Heute",
+			"yesterday": "Gestern",
+			"daysAgo": "vor {count} Tagen"
+		},
+		"confirmDelete": "Sind Sie sicher, dass Sie dieses Formular löschen möchten?",
+		"defaults": {
+			"title": "Neues Formular",
+			"submitButton": "Absenden",
+			"successMessage": "Vielen Dank für Ihre Antwort!"
+		},
+		"editor": {
+			"loading": "Formular wird geladen...",
+			"backToOverview": "Zurück zur Übersicht",
+			"titlePlaceholder": "Formular-Titel",
+			"saved": "Gespeichert",
+			"savedMessage": "Änderungen wurden erfolgreich gespeichert",
+			"saveFailed": "Speichern fehlgeschlagen",
+			"saveFailedMessage": "Änderungen konnten nicht gespeichert werden",
+			"tabs": {
+				"designer": "Designer",
+				"settings": "Einstellungen"
+			},
+			"preview": "Vorschau",
+			"save": "Speichern",
+			"saving": "Speichert...",
+			"addDescription": "Beschreibung hinzufügen...",
+			"emptyState": "Klicken Sie auf einen Feldtyp links, um Felder hinzuzufügen",
+			"deleteField": {
+				"title": "Feld löschen?",
+				"message": "Möchten Sie dieses Feld wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+				"confirm": "Löschen"
+			},
+			"editTitle": "{title} bearbeiten - FormHub"
+		},
+		"responses": {
+			"title": "{title} - Antworten - FormHub",
+			"loading": "Antworten werden geladen...",
+			"formNotFound": "Formular nicht gefunden",
+			"backToForms": "Formulare",
+			"refresh": "Aktualisieren",
+			"export": "Exportieren",
+			"responseCount": "{count} Antwort | {count} Antworten",
+			"empty": {
+				"title": "Noch keine Antworten",
+				"description": "Sobald jemand das Formular ausfüllt, erscheinen die Antworten hier."
+			},
+			"tabs": {
+				"summary": "Zusammenfassung",
+				"question": "Frage",
+				"individual": "Einzelansicht"
+			},
+			"summary": {
+				"responses": "Antworten",
+				"answersCount": "{count} Antworten",
+				"more": "+{count} weitere",
+				"empty": "(Leer)"
+			},
+			"individual": {
+				"of": "von",
+				"newest": "Neueste",
+				"oldest": "Älteste",
+				"newestFirst": "Neueste zuerst",
+				"oldestFirst": "Älteste zuerst",
+				"delete": "Löschen",
+				"metadata": "Metadaten",
+				"ipAddress": "IP-Adresse",
+				"userAgent": "User Agent",
+				"ofValue": "{value} von {max}",
+				"signature": "Unterschrift",
+				"file": "Datei"
+			},
+			"confirmDelete": "Möchten Sie diese Antwort wirklich löschen?"
+		}
+	},
+	"builder": {
+		"categories": {
+			"input": "Eingabefelder",
+			"choice": "Auswahlfelder",
+			"special": "Spezialfelder",
+			"layout": "Layout"
+		},
+		"fieldItem": {
+			"sectionTitle": "Abschnittstitel",
+			"sectionDescription": "Beschreibung des Abschnitts (optional)",
+			"pagebreak": "Seitenumbruch",
+			"headingPlaceholder": "Überschrift eingeben...",
+			"paragraphPlaceholder": "Beschreibungstext eingeben...",
+			"fieldLabel": "Feldbezeichnung",
+			"required": "Pflichtfeld",
+			"settings": "Einstellungen",
+			"deleteField": "Feld löschen"
+		},
+		"fieldSettings": {
+			"label": "Bezeichnung",
+			"helpText": "Hilfetext",
+			"helpTextPlaceholder": "Optionaler Hinweis für Benutzer",
+			"placeholder": "Platzhalter",
+			"required": "Pflichtfeld",
+			"options": "Optionen",
+			"removeOption": "Option entfernen",
+			"addOption": "Option hinzufügen",
+			"range": "Bereich",
+			"min": "Min",
+			"max": "Max",
+			"labels": "Beschriftungen",
+			"minLabelPlaceholder": "Min-Label (z.B. 'Stimme nicht zu')",
+			"maxLabelPlaceholder": "Max-Label (z.B. 'Stimme zu')",
+			"size": "Größe",
+			"headingLarge": "Groß (H1)",
+			"headingMedium": "Mittel (H2)",
+			"headingSmall": "Klein (H3)",
+			"headingVerySmall": "Sehr klein (H4)",
+			"collapsible": "Einklappbar",
+			"allowedFileTypes": "Erlaubte Dateitypen",
+			"allowedFileTypesPlaceholder": "z.B. .pdf, .jpg, .png",
+			"allowedFileTypesHint": "Kommagetrennt, leer für alle Typen",
+			"maxFileSize": "Max. Dateigröße (MB)",
+			"multipleFiles": "Mehrere Dateien erlauben",
+			"validation": "Validierung",
+			"charLength": "Zeichenlänge",
+			"regexPattern": "Regex-Pattern",
+			"regexPatternPlaceholder": "z.B. ^[A-Z]{2}[0-9]{4}$",
+			"regexPatternHint": "Regulärer Ausdruck für Validierung",
+			"patternErrorMessage": "Fehlermeldung (Pattern)",
+			"patternErrorPlaceholder": "z.B. 'Format: XX0000'",
+			"valueRange": "Wertebereich",
+			"requiredErrorMessage": "Fehlermeldung (Pflichtfeld)",
+			"requiredErrorPlaceholder": "Standard: 'Dieses Feld ist erforderlich'",
+			"edit": "bearbeiten",
+			"done": "Fertig"
+		},
+		"formSettings": {
+			"tabs": {
+				"general": "Allgemein",
+				"design": "Design",
+				"access": "Link & Zugriff"
+			},
+			"form": "Formular",
+			"buttonText": "Button-Text",
+			"buttonTextHint": "Text, der auf dem Absende-Button angezeigt wird.",
+			"successMessage": "Erfolgsmeldung",
+			"successMessageHint": "Nachricht, die nach erfolgreicher Einreichung angezeigt wird.",
+			"allowMultiple": "Mehrfache Einreichungen erlauben",
+			"availability": "Verfügbarkeit",
+			"status": "Status",
+			"draft": "Entwurf",
+			"published": "Veröffentlicht",
+			"closed": "Geschlossen",
+			"statusWarningFuture": "Das Formular ist veröffentlicht, aber das Startdatum liegt noch in der Zukunft. Benutzer sehen einen Countdown.",
+			"statusWarningExpired": "Das Formular ist veröffentlicht, aber das Enddatum ist überschritten. Benutzer sehen eine Ablauf-Meldung.",
+			"statusInfoClosed": "Das Formular ist geschlossen und nimmt keine neuen Einreichungen an.",
+			"startDateTime": "Startdatum & Uhrzeit",
+			"endDateTime": "Enddatum & Uhrzeit",
+			"reset": "Zurücksetzen",
+			"noTimeRestriction": "Leer lassen für keine zeitliche Einschränkung.",
+			"maxSubmissions": "Max. Einreichungen",
+			"maxSubmissionsHint": "0 = unbegrenzt",
+			"colors": "Farben",
+			"primaryColor": "Primärfarbe",
+			"textColor": "Textfarbe",
+			"pageBackground": "Hintergrund (Seite)",
+			"formBackground": "Hintergrund (Formular)",
+			"layout": "Layout",
+			"formWidth": "Formularbreite",
+			"widthNarrow": "Schmal (480px)",
+			"widthStandard": "Standard (640px)",
+			"widthWide": "Breit (768px)",
+			"widthVeryWide": "Sehr breit (896px)",
+			"borderRadius": "Eckenradius",
+			"radiusNone": "Keine",
+			"radiusSmall": "Klein",
+			"radiusMedium": "Mittel",
+			"radiusLarge": "Groß",
+			"style": "Stil",
+			"headerStyle": "Header-Stil",
+			"headerDefault": "Standard",
+			"headerColored": "Farbiger Header",
+			"headerMinimal": "Minimal",
+			"buttonStyle": "Button-Stil",
+			"buttonFilled": "Gefüllt",
+			"buttonOutline": "Umrandet",
+			"fontFamily": "Schriftart",
+			"fontDefault": "Standard (Sans-Serif)",
+			"fontSerif": "Serif",
+			"fontMono": "Monospace",
+			"backgroundImage": "Hintergrundbild",
+			"uploadBackgroundImage": "Hintergrundbild hochladen",
+			"imageSize": "Bildgröße",
+			"sizeCover": "Füllen (cover)",
+			"sizeContain": "Einpassen (contain)",
+			"sizeAuto": "Original (auto)",
+			"formLink": "Formular-Link",
+			"currentLink": "Aktueller Link",
+			"copyLink": "Link kopieren",
+			"linkCopied": "Link kopiert",
+			"linkCopiedMessage": "Der Formular-Link wurde in die Zwischenablage kopiert",
+			"linkCopyError": "Fehler",
+			"linkCopyErrorMessage": "Link konnte nicht kopiert werden",
+			"customUrl": "Benutzerdefinierte URL",
+			"customUrlOptional": "(optional)",
+			"customUrlPlaceholder": "mein-formular",
+			"urlTaken": "Diese URL ist bereits vergeben",
+			"urlInvalid": "Nur Kleinbuchstaben, Zahlen und Bindestriche (mind. 3 Zeichen)",
+			"urlAutomatic": "Leer lassen für automatische ID-basierte URL",
+			"passwordProtection": "Passwort-Schutz",
+			"enablePassword": "Passwort-Schutz aktivieren",
+			"passwordHint": "Besucher müssen ein Passwort eingeben, um das Formular zu sehen.",
+			"setNewPassword": "Neues Passwort setzen",
+			"setPassword": "Passwort festlegen",
+			"passwordPlaceholder": "Passwort eingeben",
+			"keepExistingPassword": "Leer lassen für bestehendes Passwort",
+			"passwordAlreadySet": "Passwort ist bereits gesetzt"
+		}
+	},
+	"dialog": {
+		"cancel": "Abbrechen",
+		"confirm": "Bestätigen"
+	},
+	"imageUpload": {
+		"upload": "Bild hochladen",
+		"change": "Ändern",
+		"remove": "Entfernen",
+		"preview": "Vorschau",
+		"dragDrop": "Hier klicken oder Bild hineinziehen",
+		"maxSize": "Max. {size}MB",
+		"formats": "JPG, PNG, GIF, WEBP",
+		"uploadError": "Upload-Fehler",
+		"uploadErrorMessage": "Das Bild konnte nicht hochgeladen werden. Bitte versuchen Sie es erneut.",
+		"sizeError": "Datei zu groß",
+		"sizeErrorMessage": "Die Datei überschreitet die maximale Größe von {size}MB.",
+		"invalidFileType": "Ungültiger Dateityp"
+	},
+	"toast": {
+		"close": "Schließen",
+		"notifications": "Benachrichtigungen"
+	},
+	"store": {
+		"forms": {
+			"loadError": "Formulare konnten nicht geladen werden",
+			"loadFormError": "Formular konnte nicht geladen werden",
+			"created": "Formular erstellt",
+			"createdMessage": "Das Formular wurde erfolgreich erstellt",
+			"createError": "Formular konnte nicht erstellt werden",
+			"saveError": "Formular konnte nicht gespeichert werden",
+			"deleted": "Formular gelöscht",
+			"deletedMessage": "Das Formular wurde erfolgreich gelöscht",
+			"deleteError": "Formular konnte nicht gelöscht werden",
+			"duplicated": "Formular dupliziert",
+			"duplicatedMessage": "Das Formular wurde erfolgreich dupliziert",
+			"duplicateError": "Formular konnte nicht dupliziert werden"
+		}
+	},
+	"select": {
+		"placeholder": "Bitte auswählen..."
+	},
+	"signature": {
+		"clear": "Löschen"
+	},
+	"skipLink": {
+		"label": "Zum Hauptinhalt springen"
+	},
+	"theme": {
+		"enableDark": "Dunkelmodus aktivieren",
+		"enableLight": "Hellmodus aktivieren",
+		"dark": "Dunkelmodus",
+		"light": "Hellmodus"
+	},
+	"autoSave": {
+		"saveFailed": "Speichern fehlgeschlagen",
+		"lastSaved": "Zuletzt gespeichert: {time}",
+		"saving": "Speichert...",
+		"unsavedChanges": "Ungespeicherte Änderungen"
+	},
+	"validation": {
+		"required": "Dieses Feld ist erforderlich",
+		"email": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+		"phone": "Bitte geben Sie eine gültige Telefonnummer ein",
+		"url": "Bitte geben Sie eine gültige URL ein (https://...)",
+		"minLength": "Mindestens {min} Zeichen erforderlich",
+		"maxLength": "Maximal {max} Zeichen erlaubt",
+		"min": "Der Wert muss mindestens {min} sein",
+		"max": "Der Wert darf maximal {max} sein",
+		"pattern": "Der Wert entspricht nicht dem erforderlichen Format",
+		"fileSize": "Die Datei darf maximal {max} MB groß sein",
+		"fileType": "Erlaubte Dateitypen: {types}",
+		"invalidNumber": "Bitte geben Sie eine gültige Zahl ein"
+	},
+	"setup": {
+		"welcome": "Willkommen bei Formera",
+		"createAdmin": "Erstellen Sie Ihr Administrator-Konto",
+		"firstStart": "Erster Start",
+		"firstStartInfo": "Dieses Konto wird der Administrator sein. Bewahren Sie Ihre Zugangsdaten sicher auf.",
+		"appName": "App-Name",
+		"yourName": "Ihr Name",
+		"namePlaceholder": "Max Mustermann",
+		"emailPlaceholder": "admin{'@'}example.de",
+		"passwordPlaceholder": "Mindestens 8 Zeichen",
+		"confirmPasswordPlaceholder": "Passwort wiederholen",
+		"allowRegistration": "Öffentliche Registrierung erlauben",
+		"allowRegistrationHint": "Wenn deaktiviert, können sich nur Sie anmelden.",
+		"running": "Setup wird ausgeführt...",
+		"complete": "Setup abschließen",
+		"failed": "Setup fehlgeschlagen. Bitte versuchen Sie es erneut."
+	},
+	"richText": {
+		"placeholder": "Schreibe hier...",
+		"enterUrl": "URL eingeben:",
+		"bold": "Fett (Ctrl+B)",
+		"italic": "Kursiv (Ctrl+I)",
+		"underline": "Unterstrichen (Ctrl+U)",
+		"strikethrough": "Durchgestrichen",
+		"heading1": "Überschrift 1",
+		"heading2": "Überschrift 2",
+		"heading3": "Überschrift 3",
+		"bulletList": "Aufzählung",
+		"orderedList": "Nummerierte Liste",
+		"quote": "Zitat",
+		"link": "Link",
+		"undo": "Rückgängig (Ctrl+Z)",
+		"redo": "Wiederholen (Ctrl+Y)"
+	},
+	"fileUpload": {
+		"uploading": "Wird hochgeladen...",
+		"selectFile": "Datei auswählen",
+		"selectFiles": "Dateien auswählen",
+		"uploadFailed": "Upload fehlgeschlagen",
+		"fileTooLarge": "Datei \"{name}\" ist zu groß. Maximum: {max} MB",
+		"remove": "Entfernen",
+		"maxSize": "Max. {size} MB"
+	},
+	"fields": {
+		"text": {
+			"label": "Kurztext",
+			"description": "Einzeilige Texteingabe"
+		},
+		"textarea": {
+			"label": "Langtext",
+			"description": "Mehrzeilige Texteingabe"
+		},
+		"number": {
+			"label": "Zahl",
+			"description": "Numerische Eingabe"
+		},
+		"email": {
+			"label": "E-Mail",
+			"description": "E-Mail-Adresse"
+		},
+		"phone": {
+			"label": "Telefon",
+			"description": "Telefonnummer"
+		},
+		"date": {
+			"label": "Datum",
+			"description": "Datumsauswahl"
+		},
+		"time": {
+			"label": "Uhrzeit",
+			"description": "Zeitauswahl"
+		},
+		"url": {
+			"label": "URL",
+			"description": "Webadresse"
+		},
+		"richtext": {
+			"label": "Rich Text",
+			"description": "Formatierter Text mit Editor"
+		},
+		"select": {
+			"label": "Dropdown",
+			"description": "Einzelauswahl aus Liste"
+		},
+		"radio": {
+			"label": "Optionen",
+			"description": "Einzelauswahl mit Buttons"
+		},
+		"checkbox": {
+			"label": "Checkboxen",
+			"description": "Mehrfachauswahl"
+		},
+		"dropdown": {
+			"label": "Mehrfachauswahl",
+			"description": "Mehrere aus Liste wählen"
+		},
+		"file": {
+			"label": "Datei-Upload",
+			"description": "Datei hochladen"
+		},
+		"rating": {
+			"label": "Bewertung",
+			"description": "Sterne-Bewertung"
+		},
+		"scale": {
+			"label": "Skala",
+			"description": "Lineare Skala (1-10)"
+		},
+		"signature": {
+			"label": "Unterschrift",
+			"description": "Digitale Unterschrift"
+		},
+		"section": {
+			"label": "Abschnitt",
+			"description": "Gruppiert Felder in einem Abschnitt"
+		},
+		"pagebreak": {
+			"label": "Seitenumbruch",
+			"description": "Neue Seite im Formular"
+		},
+		"divider": {
+			"label": "Trennlinie",
+			"description": "Horizontale Trennlinie"
+		},
+		"heading": {
+			"label": "Überschrift",
+			"description": "Abschnittsüberschrift"
+		},
+		"paragraph": {
+			"label": "Absatz",
+			"description": "Beschreibungstext"
+		},
+		"image": {
+			"label": "Bild",
+			"description": "Bild einfügen"
+		}
+	}
+}

@@ -1,0 +1,611 @@
+{
+	"common": {
+		"save": "Save",
+		"cancel": "Cancel",
+		"delete": "Delete",
+		"edit": "Edit",
+		"back": "Back",
+		"loading": "Loading...",
+		"error": "Error",
+		"success": "Success",
+		"confirm": "Confirm",
+		"close": "Close",
+		"done": "Done",
+		"add": "Add",
+		"remove": "Remove",
+		"search": "Search",
+		"noResults": "No results found",
+		"you": "You"
+	},
+	"auth": {
+		"login": "Sign In",
+		"logout": "Sign Out",
+		"register": "Register",
+		"email": "Email",
+		"password": "Password",
+		"confirmPassword": "Confirm Password",
+		"name": "Name",
+		"welcomeBack": "Welcome back to",
+		"createAccount": "Create your account",
+		"invalidCredentials": "Invalid email or password",
+		"passwordMismatch": "Passwords do not match",
+		"passwordMinLength": "Password must be at least 8 characters long",
+		"registrationFailed": "Registration failed. Email already taken?",
+		"loggingIn": "Signing in...",
+		"registering": "Registering...",
+		"noAccount": "Don't have an account?",
+		"hasAccount": "Already have an account?",
+		"registerNow": "Register now",
+		"loginNow": "Sign in now",
+		"registrationDisabled": "Registration disabled",
+		"registrationNotAvailable": "Public registration is currently not available.",
+		"emailPlaceholder": "your{'@'}email.com",
+		"passwordPlaceholder": "Your password",
+		"namePlaceholder": "Your name",
+		"minCharsPlaceholder": "At least 8 characters",
+		"repeatPasswordPlaceholder": "Repeat password"
+	},
+	"nav": {
+		"forms": "Forms",
+		"settings": "Settings"
+	},
+	"settings": {
+		"title": "Settings",
+		"description": "Manage your application settings",
+		"saved": "Settings saved",
+		"saveError": "Error saving settings",
+		"loadingSettings": "Loading settings...",
+		"loadError": "Settings could not be loaded.",
+		"tabs": {
+			"general": "General",
+			"design": "Design",
+			"footer": "Footer Links",
+			"users": "Users"
+		},
+		"general": {
+			"application": "Application",
+			"appName": "App Name",
+			"appNameHint": "The name is displayed in the header and footer.",
+			"security": "Security",
+			"allowRegistration": "Allow public registration",
+			"allowRegistrationHint": "If disabled, new users cannot register themselves."
+		},
+		"design": {
+			"colors": "Colors",
+			"primaryColor": "Primary Color",
+			"primaryColorHint": "Used for buttons, links, and accents.",
+			"preview": "Preview",
+			"button": "Button",
+			"link": "Link",
+			"branding": "Branding",
+			"logo": "Logo",
+			"logoHint": "The logo is displayed in the header. Recommended: 200x50px, PNG or SVG.",
+			"uploadLogo": "Upload logo",
+			"removeLogo": "Remove logo",
+			"showAppName": "Show app name next to logo",
+			"uploading": "Uploading...",
+			"uploadError": "Upload error",
+			"favicon": "Favicon",
+			"faviconHint": "The favicon is displayed in the browser tab. Recommended: 32x32px or 64x64px, PNG or ICO.",
+			"uploadFavicon": "Upload favicon",
+			"removeFavicon": "Remove favicon",
+			"loginPage": "Login Page",
+			"backgroundImage": "Background Image",
+			"backgroundImageHint": "The background image is displayed on the login and registration page. Recommended: At least 1920x1080px, JPG or PNG.",
+			"uploadBackground": "Upload background image",
+			"removeBackground": "Remove background",
+			"noBackgroundHint": "Without a background image, a gradient will be displayed."
+		},
+		"footer": {
+			"title": "Footer Links",
+			"description": "Add links that will be displayed in the footer (e.g., Privacy Policy, Imprint).",
+			"noLinks": "No footer links available",
+			"addLink": "Add link",
+			"removeLink": "Remove link",
+			"labelPlaceholder": "Label (e.g., Privacy Policy)",
+			"urlPlaceholder": "URL (e.g., https://example.com/privacy)"
+		},
+		"users": {
+			"title": "Manage Users",
+			"addUser": "Add user",
+			"loadingUsers": "Loading users...",
+			"noUsers": "No users found",
+			"createdAt": "Created on",
+			"editUser": "Edit user",
+			"deleteUser": "Delete user",
+			"admin": "Admin",
+			"user": "User",
+			"createUser": "Create new user",
+			"editUserTitle": "Edit user",
+			"nameEmailRequired": "Name and email are required",
+			"passwordRequired": "Password is required for new users",
+			"userUpdated": "User updated",
+			"userCreated": "User created",
+			"userDeleted": "User deleted",
+			"cannotDeleteSelf": "You cannot delete yourself",
+			"confirmDelete": "Do you really want to delete the user \"{name}\"?",
+			"role": "Role",
+			"roleHint": "Administrators have access to settings and user management.",
+			"leaveEmptyToKeep": "(leave empty to keep)",
+			"administrator": "Administrator"
+		}
+	},
+	"forms": {
+		"title": "Forms",
+		"subtitle": "Create and manage your forms",
+		"newForm": "New Form",
+		"loading": "Loading forms...",
+		"empty": {
+			"title": "No forms available",
+			"description": "Create your first form and start collecting data.",
+			"button": "Create first form"
+		},
+		"stats": {
+			"total": "Total",
+			"published": "Published",
+			"drafts": "Drafts",
+			"responses": "Responses"
+		},
+		"search": {
+			"placeholder": "Search forms...",
+			"results": "{count} result | {count} results",
+			"clearFilters": "Reset filters",
+			"noResults": "No forms found",
+			"noResultsHint": "Try different search terms or filters."
+		},
+		"filter": {
+			"allStatus": "All status",
+			"published": "Published",
+			"draft": "Draft",
+			"closed": "Closed"
+		},
+		"sort": {
+			"lastEdited": "Last edited",
+			"createdAt": "Created date",
+			"alphabetical": "Alphabetical"
+		},
+		"status": {
+			"published": "Published",
+			"draft": "Draft",
+			"closed": "Closed"
+		},
+		"card": {
+			"untitled": "Untitled Form",
+			"noDescription": "No description",
+			"fields": "{count} fields",
+			"responses": "{count} responses"
+		},
+		"menu": {
+			"edit": "Edit",
+			"responses": "Responses",
+			"copyLink": "Copy link",
+			"open": "Open",
+			"duplicate": "Duplicate",
+			"delete": "Delete"
+		},
+		"date": {
+			"today": "Today",
+			"yesterday": "Yesterday",
+			"daysAgo": "{count} days ago"
+		},
+		"confirmDelete": "Are you sure you want to delete this form?",
+		"defaults": {
+			"title": "New Form",
+			"submitButton": "Submit",
+			"successMessage": "Thank you for your response!"
+		},
+		"editor": {
+			"loading": "Loading form...",
+			"backToOverview": "Back to overview",
+			"titlePlaceholder": "Form title",
+			"saved": "Saved",
+			"savedMessage": "Changes saved successfully",
+			"saveFailed": "Save failed",
+			"saveFailedMessage": "Changes could not be saved",
+			"tabs": {
+				"designer": "Designer",
+				"settings": "Settings"
+			},
+			"preview": "Preview",
+			"save": "Save",
+			"saving": "Saving...",
+			"addDescription": "Add description...",
+			"emptyState": "Click on a field type on the left to add fields",
+			"deleteField": {
+				"title": "Delete field?",
+				"message": "Do you really want to delete this field? This action cannot be undone.",
+				"confirm": "Delete"
+			},
+			"editTitle": "{title} edit - FormHub"
+		},
+		"responses": {
+			"title": "{title} - Responses - FormHub",
+			"loading": "Loading responses...",
+			"formNotFound": "Form not found",
+			"backToForms": "Forms",
+			"refresh": "Refresh",
+			"export": "Export",
+			"responseCount": "{count} response | {count} responses",
+			"empty": {
+				"title": "No responses yet",
+				"description": "Once someone fills out the form, the responses will appear here."
+			},
+			"tabs": {
+				"summary": "Summary",
+				"question": "Question",
+				"individual": "Individual"
+			},
+			"summary": {
+				"responses": "Responses",
+				"answersCount": "{count} responses",
+				"more": "+{count} more",
+				"empty": "(Empty)"
+			},
+			"individual": {
+				"of": "of",
+				"newest": "Newest",
+				"oldest": "Oldest",
+				"newestFirst": "Newest first",
+				"oldestFirst": "Oldest first",
+				"delete": "Delete",
+				"metadata": "Metadata",
+				"ipAddress": "IP Address",
+				"userAgent": "User Agent",
+				"ofValue": "{value} of {max}",
+				"signature": "Signature",
+				"file": "File"
+			},
+			"confirmDelete": "Do you really want to delete this response?"
+		}
+	},
+	"builder": {
+		"categories": {
+			"input": "Input Fields",
+			"choice": "Choice Fields",
+			"special": "Special Fields",
+			"layout": "Layout"
+		},
+		"fieldItem": {
+			"sectionTitle": "Section title",
+			"sectionDescription": "Section description (optional)",
+			"pagebreak": "Page Break",
+			"headingPlaceholder": "Enter heading...",
+			"paragraphPlaceholder": "Enter description text...",
+			"fieldLabel": "Field label",
+			"required": "Required",
+			"settings": "Settings",
+			"deleteField": "Delete field"
+		},
+		"fieldSettings": {
+			"label": "Label",
+			"helpText": "Help text",
+			"helpTextPlaceholder": "Optional hint for users",
+			"placeholder": "Placeholder",
+			"required": "Required",
+			"options": "Options",
+			"removeOption": "Remove option",
+			"addOption": "Add option",
+			"range": "Range",
+			"min": "Min",
+			"max": "Max",
+			"labels": "Labels",
+			"minLabelPlaceholder": "Min label (e.g. 'Disagree')",
+			"maxLabelPlaceholder": "Max label (e.g. 'Agree')",
+			"size": "Size",
+			"headingLarge": "Large (H1)",
+			"headingMedium": "Medium (H2)",
+			"headingSmall": "Small (H3)",
+			"headingVerySmall": "Very small (H4)",
+			"collapsible": "Collapsible",
+			"allowedFileTypes": "Allowed file types",
+			"allowedFileTypesPlaceholder": "e.g. .pdf, .jpg, .png",
+			"allowedFileTypesHint": "Comma-separated, empty for all types",
+			"maxFileSize": "Max. file size (MB)",
+			"multipleFiles": "Allow multiple files",
+			"validation": "Validation",
+			"charLength": "Character length",
+			"regexPattern": "Regex pattern",
+			"regexPatternPlaceholder": "e.g. ^[A-Z]{2}[0-9]{4}$",
+			"regexPatternHint": "Regular expression for validation",
+			"patternErrorMessage": "Error message (Pattern)",
+			"patternErrorPlaceholder": "e.g. 'Format: XX0000'",
+			"valueRange": "Value range",
+			"requiredErrorMessage": "Error message (Required)",
+			"requiredErrorPlaceholder": "Default: 'This field is required'",
+			"edit": "edit",
+			"done": "Done"
+		},
+		"formSettings": {
+			"tabs": {
+				"general": "General",
+				"design": "Design",
+				"access": "Link & Access"
+			},
+			"form": "Form",
+			"buttonText": "Button text",
+			"buttonTextHint": "Text displayed on the submit button.",
+			"successMessage": "Success message",
+			"successMessageHint": "Message displayed after successful submission.",
+			"allowMultiple": "Allow multiple submissions",
+			"availability": "Availability",
+			"status": "Status",
+			"draft": "Draft",
+			"published": "Published",
+			"closed": "Closed",
+			"statusWarningFuture": "The form is published, but the start date is still in the future. Users will see a countdown.",
+			"statusWarningExpired": "The form is published, but the end date has passed. Users will see an expiry message.",
+			"statusInfoClosed": "The form is closed and does not accept new submissions.",
+			"startDateTime": "Start date & time",
+			"endDateTime": "End date & time",
+			"reset": "Reset",
+			"noTimeRestriction": "Leave empty for no time restriction.",
+			"maxSubmissions": "Max. submissions",
+			"maxSubmissionsHint": "0 = unlimited",
+			"colors": "Colors",
+			"primaryColor": "Primary color",
+			"textColor": "Text color",
+			"pageBackground": "Background (Page)",
+			"formBackground": "Background (Form)",
+			"layout": "Layout",
+			"formWidth": "Form width",
+			"widthNarrow": "Narrow (480px)",
+			"widthStandard": "Standard (640px)",
+			"widthWide": "Wide (768px)",
+			"widthVeryWide": "Very wide (896px)",
+			"borderRadius": "Border radius",
+			"radiusNone": "None",
+			"radiusSmall": "Small",
+			"radiusMedium": "Medium",
+			"radiusLarge": "Large",
+			"style": "Style",
+			"headerStyle": "Header style",
+			"headerDefault": "Default",
+			"headerColored": "Colored header",
+			"headerMinimal": "Minimal",
+			"buttonStyle": "Button style",
+			"buttonFilled": "Filled",
+			"buttonOutline": "Outline",
+			"fontFamily": "Font",
+			"fontDefault": "Default (Sans-Serif)",
+			"fontSerif": "Serif",
+			"fontMono": "Monospace",
+			"backgroundImage": "Background image",
+			"uploadBackgroundImage": "Upload background image",
+			"imageSize": "Image size",
+			"sizeCover": "Fill (cover)",
+			"sizeContain": "Fit (contain)",
+			"sizeAuto": "Original (auto)",
+			"formLink": "Form Link",
+			"currentLink": "Current link",
+			"copyLink": "Copy link",
+			"linkCopied": "Link copied",
+			"linkCopiedMessage": "The form link has been copied to clipboard",
+			"linkCopyError": "Error",
+			"linkCopyErrorMessage": "Link could not be copied",
+			"customUrl": "Custom URL",
+			"customUrlOptional": "(optional)",
+			"customUrlPlaceholder": "my-form",
+			"urlTaken": "This URL is already taken",
+			"urlInvalid": "Only lowercase letters, numbers and hyphens (min. 3 characters)",
+			"urlAutomatic": "Leave empty for automatic ID-based URL",
+			"passwordProtection": "Password Protection",
+			"enablePassword": "Enable password protection",
+			"passwordHint": "Visitors must enter a password to see the form.",
+			"setNewPassword": "Set new password",
+			"setPassword": "Set password",
+			"passwordPlaceholder": "Enter password",
+			"keepExistingPassword": "Leave empty to keep existing password",
+			"passwordAlreadySet": "Password is already set"
+		}
+	},
+	"dialog": {
+		"cancel": "Cancel",
+		"confirm": "Confirm"
+	},
+	"imageUpload": {
+		"upload": "Upload Image",
+		"change": "Change",
+		"remove": "Remove",
+		"preview": "Preview",
+		"dragDrop": "Click or drag image here",
+		"maxSize": "Max. {size}MB",
+		"formats": "JPG, PNG, GIF, WEBP",
+		"uploadError": "Upload Error",
+		"uploadErrorMessage": "The image could not be uploaded. Please try again.",
+		"sizeError": "File Too Large",
+		"sizeErrorMessage": "The file exceeds the maximum size of {size}MB.",
+		"invalidFileType": "Invalid file type"
+	},
+	"toast": {
+		"close": "Close",
+		"notifications": "Notifications"
+	},
+	"store": {
+		"forms": {
+			"loadError": "Forms could not be loaded",
+			"loadFormError": "Form could not be loaded",
+			"created": "Form created",
+			"createdMessage": "The form was created successfully",
+			"createError": "Form could not be created",
+			"saveError": "Form could not be saved",
+			"deleted": "Form deleted",
+			"deletedMessage": "The form was deleted successfully",
+			"deleteError": "Form could not be deleted",
+			"duplicated": "Form duplicated",
+			"duplicatedMessage": "The form was duplicated successfully",
+			"duplicateError": "Form could not be duplicated"
+		}
+	},
+	"select": {
+		"placeholder": "Please select..."
+	},
+	"signature": {
+		"clear": "Clear"
+	},
+	"skipLink": {
+		"label": "Skip to main content"
+	},
+	"theme": {
+		"enableDark": "Enable dark mode",
+		"enableLight": "Enable light mode",
+		"dark": "Dark mode",
+		"light": "Light mode"
+	},
+	"autoSave": {
+		"saveFailed": "Save failed",
+		"lastSaved": "Last saved: {time}",
+		"saving": "Saving...",
+		"unsavedChanges": "Unsaved changes"
+	},
+	"validation": {
+		"required": "This field is required",
+		"email": "Please enter a valid email address",
+		"phone": "Please enter a valid phone number",
+		"url": "Please enter a valid URL (https://...)",
+		"minLength": "At least {min} characters required",
+		"maxLength": "Maximum {max} characters allowed",
+		"min": "Value must be at least {min}",
+		"max": "Value must not exceed {max}",
+		"pattern": "Value does not match the required format",
+		"fileSize": "File must not exceed {max} MB",
+		"fileType": "Allowed file types: {types}",
+		"invalidNumber": "Please enter a valid number"
+	},
+	"setup": {
+		"welcome": "Welcome to Formera",
+		"createAdmin": "Create your administrator account",
+		"firstStart": "First Start",
+		"firstStartInfo": "This account will be the administrator. Keep your credentials safe.",
+		"appName": "App Name",
+		"yourName": "Your Name",
+		"namePlaceholder": "John Doe",
+		"emailPlaceholder": "admin{'@'}example.com",
+		"passwordPlaceholder": "At least 8 characters",
+		"confirmPasswordPlaceholder": "Repeat password",
+		"allowRegistration": "Allow public registration",
+		"allowRegistrationHint": "If disabled, only you can sign in.",
+		"running": "Running setup...",
+		"complete": "Complete setup",
+		"failed": "Setup failed. Please try again."
+	},
+	"richText": {
+		"placeholder": "Write here...",
+		"enterUrl": "Enter URL:",
+		"bold": "Bold (Ctrl+B)",
+		"italic": "Italic (Ctrl+I)",
+		"underline": "Underline (Ctrl+U)",
+		"strikethrough": "Strikethrough",
+		"heading1": "Heading 1",
+		"heading2": "Heading 2",
+		"heading3": "Heading 3",
+		"bulletList": "Bullet list",
+		"orderedList": "Numbered list",
+		"quote": "Quote",
+		"link": "Link",
+		"undo": "Undo (Ctrl+Z)",
+		"redo": "Redo (Ctrl+Y)"
+	},
+	"fileUpload": {
+		"uploading": "Uploading...",
+		"selectFile": "Select file",
+		"selectFiles": "Select files",
+		"uploadFailed": "Upload failed",
+		"fileTooLarge": "File \"{name}\" is too large. Maximum: {max} MB",
+		"remove": "Remove",
+		"maxSize": "Max. {size} MB"
+	},
+	"fields": {
+		"text": {
+			"label": "Short Text",
+			"description": "Single-line text input"
+		},
+		"textarea": {
+			"label": "Long Text",
+			"description": "Multi-line text input"
+		},
+		"number": {
+			"label": "Number",
+			"description": "Numeric input"
+		},
+		"email": {
+			"label": "Email",
+			"description": "Email address"
+		},
+		"phone": {
+			"label": "Phone",
+			"description": "Phone number"
+		},
+		"date": {
+			"label": "Date",
+			"description": "Date picker"
+		},
+		"time": {
+			"label": "Time",
+			"description": "Time picker"
+		},
+		"url": {
+			"label": "URL",
+			"description": "Web address"
+		},
+		"richtext": {
+			"label": "Rich Text",
+			"description": "Formatted text with editor"
+		},
+		"select": {
+			"label": "Dropdown",
+			"description": "Single selection from list"
+		},
+		"radio": {
+			"label": "Options",
+			"description": "Single selection with buttons"
+		},
+		"checkbox": {
+			"label": "Checkboxes",
+			"description": "Multiple selection"
+		},
+		"dropdown": {
+			"label": "Multi-Select",
+			"description": "Select multiple from list"
+		},
+		"file": {
+			"label": "File Upload",
+			"description": "Upload file"
+		},
+		"rating": {
+			"label": "Rating",
+			"description": "Star rating"
+		},
+		"scale": {
+			"label": "Scale",
+			"description": "Linear scale (1-10)"
+		},
+		"signature": {
+			"label": "Signature",
+			"description": "Digital signature"
+		},
+		"section": {
+			"label": "Section",
+			"description": "Groups fields in a section"
+		},
+		"pagebreak": {
+			"label": "Page Break",
+			"description": "New page in the form"
+		},
+		"divider": {
+			"label": "Divider",
+			"description": "Horizontal divider line"
+		},
+		"heading": {
+			"label": "Heading",
+			"description": "Section heading"
+		},
+		"paragraph": {
+			"label": "Paragraph",
+			"description": "Description text"
+		},
+		"image": {
+			"label": "Image",
+			"description": "Insert image"
+		}
+	}
+}

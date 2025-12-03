@@ -1,0 +1,12 @@
+# Frontend
+.output
+.data
+.nuxt
+.nitro
+.cache
+.yarn
+dist
+node_modules
+localhost.pem
+localhost-key.pem
+!/.env
