@@ -7,8 +7,60 @@ const localePath = useLocalePath();
 
 const isMobileMenuOpen = ref(false);
 
-// Show loading while stores initialize
-const isInitializing = computed(() => authStore.isLoading || setupStore.isLoading);
+// Helper to extract locale prefix from path (e.g., '/de', '/fr')
+function getLocalePrefix(path: string): string | null {
+	const match = path.match(/^\/([a-zA-Z-]{2,5})(?=\/|$)/);
+	return match ? `/${match[1]}` : null;
+}
+
+// Determine layout type based on route
+const layoutType = computed(() => {
+	const path = route.path;
+	const localePrefix = getLocalePrefix(path);
+
+	// Build base paths for matching
+	const base = localePrefix ? localePrefix : "";
+
+	// Auth pages: login, register, setup, index (landing)
+	if (
+		path === "/" + (localePrefix ? localePrefix.slice(1) : "") || // e.g., "/de"
+		path === base + "/login" ||
+		path === base + "/register" ||
+		path === base + "/setup" ||
+		path === "/" ||
+		path === "/login" ||
+		path === "/register" ||
+		path === "/setup"
+	) {
+		return "auth";
+	}
+	// Public form pages
+	if (path.startsWith(base + "/f/") || path.startsWith("/f/")) {
+		return "public";
+	}
+	// Dashboard pages (default)
+	return "dashboard";
+});
+
+const isAuthLayout = computed(() => layoutType.value === "auth");
+const isPublicLayout = computed(() => layoutType.value === "public");
+const isDashboardLayout = computed(() => layoutType.value === "dashboard");
+
+// Auth layout background style
+const backgroundStyle = computed(() => {
+	if (!isAuthLayout.value) return {};
+	if (setupStore.loginBackgroundDisplayURL) {
+		return {
+			backgroundImage: `url(${setupStore.loginBackgroundDisplayURL})`,
+			backgroundSize: "cover",
+			backgroundPosition: "center",
+			backgroundRepeat: "no-repeat",
+		};
+	}
+	return {
+		background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+	};
+});
 
 const handleLogout = () => {
 	authStore.logout();
@@ -33,7 +85,35 @@ watch(
 </script>
 
 <template>
-	<div class="layout">
+	<!-- Auth Layout (login, register, setup) -->
+	<div v-if="isAuthLayout" class="auth-layout" :style="backgroundStyle">
+		<NuxtPage />
+	</div>
+
+	<!-- Public Layout (public forms) -->
+	<div v-else-if="isPublicLayout" class="public-layout">
+		<main class="public-main">
+			<NuxtPage />
+		</main>
+
+		<footer v-if="setupStore.footerLinks.length > 0" class="public-footer">
+			<nav class="footer-links">
+				<a
+					v-for="link in setupStore.footerLinks"
+					:key="link.url"
+					:href="link.url"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="footer-link"
+				>
+					{{ link.label }}
+				</a>
+			</nav>
+		</footer>
+	</div>
+
+	<!-- Dashboard Layout (authenticated pages) -->
+	<div v-else class="layout">
 		<header class="header">
 			<div class="header-container">
 				<!-- Logo -->
@@ -120,7 +200,7 @@ watch(
 		</header>
 
 		<main class="main">
-			<slot />
+			<NuxtPage />
 		</main>
 
 		<footer class="footer">
@@ -145,6 +225,41 @@ watch(
 </template>
 
 <style scoped>
+/* ========================================
+   Auth Layout Styles
+   ======================================== */
+.auth-layout {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+	padding: 1rem;
+}
+
+/* ========================================
+   Public Layout Styles
+   ======================================== */
+.public-layout {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+
+.public-main {
+	flex: 1;
+}
+
+.public-footer {
+	position: relative;
+	z-index: 10;
+	padding: 1rem;
+	text-align: center;
+}
+
+/* ========================================
+   Dashboard Layout Styles
+   ======================================== */
 .layout {
 	display: flex;
 	flex-direction: column;
@@ -425,7 +540,7 @@ watch(
 	padding: 2rem 1rem;
 }
 
-/* Footer */
+/* Footer (shared) */
 .footer {
 	padding: 1rem 1.5rem;
 	background: var(--surface);
@@ -452,6 +567,7 @@ watch(
 	flex-wrap: wrap;
 	gap: 1.5rem;
 	align-items: center;
+	justify-content: center;
 }
 
 .footer-link {
@@ -518,40 +634,6 @@ watch(
 
 	.footer-container:not(.footer-centered) {
 		justify-content: space-between;
-	}
-
-	.footer-brand {
-		flex-direction: row;
-		gap: 0.5rem;
-	}
-
-	.footer-brand-with-links::after {
-		content: "·";
-		color: var(--text-secondary);
-	}
-}
-
-/* Layout Loading State */
-.layout-loading {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	min-height: 100vh;
-	background: var(--background);
-}
-
-.layout-loading .loading-spinner {
-	width: 40px;
-	height: 40px;
-	border: 3px solid var(--border);
-	border-top-color: var(--primary);
-	border-radius: 50%;
-	animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-	to {
-		transform: rotate(360deg);
 	}
 }
 </style>

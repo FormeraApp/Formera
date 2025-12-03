@@ -57,7 +57,6 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
-
 	// Serve static files for local storage
 	if cfg.Storage.GetStorageType() == "local" {
 		r.Static("/uploads", cfg.Storage.LocalPath)
@@ -180,9 +179,9 @@ func initStorage(cfg *config.Config) (storage.Storage, error) {
 
 		return s3Store, nil
 	default:
-		// Build full URL for local storage (BaseURL + LocalURL path)
-		baseURL := cfg.BaseURL + cfg.Storage.LocalURL
-		return storage.NewLocalStorage(cfg.Storage.LocalPath, baseURL)
+		// Build full URL for local storage (ApiURL + LocalURL path)
+		apiURL := cfg.ApiURL + cfg.Storage.LocalURL
+		return storage.NewLocalStorage(cfg.Storage.LocalPath, apiURL)
 	}
 }
 

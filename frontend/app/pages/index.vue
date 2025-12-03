@@ -1,8 +1,4 @@
 <script lang="ts" setup>
-definePageMeta({
-	layout: "auth",
-});
-
 const authStore = useAuthStore();
 
 onMounted(async () => {
@@ -11,9 +7,9 @@ onMounted(async () => {
 	}
 
 	if (authStore.token) {
-		navigateTo("/forms", { replace: true });
+		navigateTo("/forms");
 	} else {
-		navigateTo("/login", { replace: true });
+		navigateTo("/login");
 	}
 });
 </script>

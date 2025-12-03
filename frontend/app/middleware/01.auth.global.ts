@@ -12,7 +12,7 @@ export default defineNuxtRouteMiddleware((to) => {
 	const isGuestRoute = guestRoutes.includes(to.path);
 
 	if (isGuestRoute && authStore.user) {
-		return navigateTo("/forms", { replace: true });
+		return navigateTo("/forms");
 	}
 
 	// Protected routes
@@ -20,6 +20,6 @@ export default defineNuxtRouteMiddleware((to) => {
 	const isProtected = protectedRoutes.some((route) => to.path.startsWith(route));
 
 	if (isProtected && !authStore.user) {
-		return navigateTo("/login", { replace: true });
+		return navigateTo("/login");
 	}
 });

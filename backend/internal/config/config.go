@@ -31,7 +31,8 @@ func init() {
 
 type Config struct {
 	Port       string
-	BaseURL    string // Public URL of the backend (e.g., http://localhost:8080)
+	BaseURL    string // Frontend URL (e.g., http://localhost:3000)
+	ApiURL     string // Backend API URL (e.g., http://localhost:8080/api)
 	DBPath     string
 	JWTSecret  string
 	CorsOrigin string
@@ -72,8 +73,8 @@ type StorageConfig struct {
 	S3PresignDuration time.Duration // Optional: presigned URL duration
 
 	// Migration settings
-	MigrateOnStart      bool // Auto-migrate local files to S3 when S3 is enabled
-	DeleteAfterMigrate  bool // Delete local files after successful migration
+	MigrateOnStart     bool // Auto-migrate local files to S3 when S3 is enabled
+	DeleteAfterMigrate bool // Delete local files after successful migration
 }
 
 // IsS3Configured returns true if S3 credentials are configured
@@ -98,17 +99,18 @@ func Load() *Config {
 	cleanupMinAge, _ := strconv.Atoi(getEnv("CLEANUP_MIN_AGE_DAYS", "7"))
 
 	port := getEnv("PORT", "8080")
-	baseURL := getEnv("BASE_URL", "http://localhost:"+port)
+	baseURL := getEnv("BASE_URL", "http://localhost:3000")
+	apiURL := getEnv("API_URL", "http://localhost:"+port+"/api")
 
 	// CORS_ORIGIN defaults to BASE_URL if not set (same-origin deployment)
 	corsOrigin := getEnv("CORS_ORIGIN", "")
 	if corsOrigin == "" {
 		corsOrigin = baseURL
 	}
-
 	return &Config{
 		Port:       port,
 		BaseURL:    baseURL,
+		ApiURL:     apiURL,
 		DBPath:     getEnv("DB_PATH", "./data/formera.db"),
 		JWTSecret:  getEnv("JWT_SECRET", "change-me-in-production-please"),
 		CorsOrigin: corsOrigin,
