@@ -23,10 +23,15 @@ COPY --from=builder /app/server .
 
 RUN mkdir -p /app/data
 
+# Create non-root user and group, set ownership
+RUN addgroup -S app && adduser -S app -G app \
+  && chown -R app:app /app /app/data
+
 ENV PORT=8080
 
 EXPOSE 8080
 
 VOLUME ["/app/data"]
 
+USER app
 CMD ["./server", "serve"]
