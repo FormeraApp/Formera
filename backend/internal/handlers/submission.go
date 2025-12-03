@@ -259,7 +259,7 @@ func (h *SubmissionHandler) ExportCSV(c *gin.Context) {
 	for _, field := range form.Fields {
 		headers = append(headers, field.Label)
 	}
-	writer.Write(headers)
+	_ = writer.Write(headers)
 
 	for _, sub := range submissions {
 		row := []string{sub.ID, sub.CreatedAt.Format(time.RFC3339)}
@@ -281,7 +281,7 @@ func (h *SubmissionHandler) ExportCSV(c *gin.Context) {
 			}
 			row = append(row, val)
 		}
-		writer.Write(row)
+		_ = writer.Write(row)
 	}
 }
 

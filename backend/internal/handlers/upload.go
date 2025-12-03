@@ -129,7 +129,7 @@ func (h *UploadHandler) UploadImage(c *gin.Context) {
 	}
 
 	// Reset file reader position after magic byte check
-	file.Seek(0, 0)
+	_, _ = file.Seek(0, 0)
 
 	// Upload to storage
 	result, err := h.storage.Upload(header.Filename, contentType, header.Size, file)

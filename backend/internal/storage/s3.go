@@ -39,44 +39,22 @@ type S3Config struct {
 // NewS3Storage creates a new S3 storage instance
 func NewS3Storage(cfg S3Config) (*S3Storage, error) {
 	// Build AWS config
-	var awsCfg aws.Config
-	var err error
-
-	// Custom endpoint resolver for S3-compatible services
-	if cfg.Endpoint != "" {
-		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-			return aws.Endpoint{
-				URL:               cfg.Endpoint,
-				HostnameImmutable: true,
-			}, nil
-		})
-
-		awsCfg, err = config.LoadDefaultConfig(context.TODO(),
-			config.WithRegion(cfg.Region),
-			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-				cfg.AccessKeyID,
-				cfg.SecretAccessKey,
-				"",
-			)),
-			config.WithEndpointResolverWithOptions(customResolver),
-		)
-	} else {
-		awsCfg, err = config.LoadDefaultConfig(context.TODO(),
-			config.WithRegion(cfg.Region),
-			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-				cfg.AccessKeyID,
-				cfg.SecretAccessKey,
-				"",
-			)),
-		)
-	}
-
+	awsCfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(cfg.Region),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+			cfg.AccessKeyID,
+			cfg.SecretAccessKey,
+			"",
+		)),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
 
+	// Create S3 client with optional custom endpoint
 	client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
 		if cfg.Endpoint != "" {
+			o.BaseEndpoint = aws.String(cfg.Endpoint)
 			o.UsePathStyle = true // Required for MinIO and some S3-compatible services
 		}
 	})

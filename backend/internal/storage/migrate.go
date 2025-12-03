@@ -233,13 +233,13 @@ func detectMimeType(path string) string {
 
 // cleanupEmptyDirs removes empty directories recursively
 func cleanupEmptyDirs(root string) {
-	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil || !info.IsDir() || path == root {
 			return nil
 		}
 
 		// Try to remove directory (will fail if not empty)
-		os.Remove(path)
+		_ = os.Remove(path)
 		return nil
 	})
 }
