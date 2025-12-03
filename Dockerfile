@@ -6,7 +6,7 @@ RUN corepack enable && corepack prepare yarn@4.9.4 --activate
 WORKDIR /app
 
 COPY frontend/package.json frontend/yarn.lock frontend/.yarnrc.yml ./
-RUN yarn install --immutable
+RUN yarn install --immutable || yarn install
 
 COPY frontend/ .
 
