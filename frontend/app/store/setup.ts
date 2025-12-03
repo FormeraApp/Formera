@@ -42,7 +42,7 @@ export const useSetupStore = defineStore("setup", () => {
 
 	const applyTheme = (themeValue: "light" | "dark" | "system") => {
 		if (import.meta.client) {
-			let effectiveTheme: "light" | "dark" = "light";
+			let effectiveTheme: "light" | "dark";
 			if (themeValue === "system") {
 				effectiveTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 			} else {
