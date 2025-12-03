@@ -128,12 +128,6 @@ export default defineNuxtConfig({
 		head: {
 			title: "Formera",
 			meta: [{ name: "description", content: "Formera - Self-Hosted Form Builder" }],
-			script: [
-				{
-					innerHTML: `(function(){var t=localStorage.getItem('theme');if(t){document.documentElement.setAttribute('data-theme',t)}else if(window.matchMedia('(prefers-color-scheme:dark)').matches){document.documentElement.setAttribute('data-theme','dark')}})()`,
-					tagPosition: "head",
-				},
-			],
 		},
 	},
 
