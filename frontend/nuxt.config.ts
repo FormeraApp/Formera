@@ -112,7 +112,7 @@ export default defineNuxtConfig({
 		public: {
 			// Override at runtime with NUXT_PUBLIC_BASE_URL and NUXT_PUBLIC_API_URL
 			baseUrl: "http://localhost:3000",
-			apiUrl: "http://localhost:8080/api",
+			apiUrl: "http://localhost:8080",
 			indexable: true,
 			VERSION: pkg.version,
 			defaults: {

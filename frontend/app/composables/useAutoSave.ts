@@ -2,11 +2,12 @@ interface AutoSaveOptions {
 	delay?: number;
 	onSave: () => Promise<void>;
 	onError?: (error: unknown) => void;
+	onNoChanges?: () => void;
 }
 
 export const useAutoSave = (options: AutoSaveOptions) => {
 	const { t } = useI18n();
-	const { delay = 2000, onSave, onError } = options;
+	const { delay = 2000, onSave, onError, onNoChanges } = options;
 
 	const isSaving = ref(false);
 	const isDirty = ref(false);
@@ -15,8 +16,12 @@ export const useAutoSave = (options: AutoSaveOptions) => {
 
 	let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 
-	const save = async () => {
-		if (!isDirty.value || isSaving.value) return;
+	const save = async (manual = false) => {
+		if (isSaving.value) return;
+		if (!isDirty.value) {
+			if (manual) onNoChanges?.();
+			return;
+		}
 
 		if (saveTimeout) {
 			clearTimeout(saveTimeout);
@@ -58,7 +63,7 @@ export const useAutoSave = (options: AutoSaveOptions) => {
 			clearTimeout(saveTimeout);
 			saveTimeout = null;
 		}
-		await save();
+		await save(true);
 	};
 
 	const cancel = () => {

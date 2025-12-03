@@ -20,10 +20,13 @@ RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /app
 
 COPY --from=builder /app/.output ./.output
+COPY docker-entrypoint.sh /docker-entrypoint.sh
 
-# Environment variables (override with NUXT_PUBLIC_BASE_URL and NUXT_PUBLIC_API_URL)
-ENV NUXT_PUBLIC_BASE_URL=http://localhost:3000
-ENV NUXT_PUBLIC_API_URL=http://localhost:8080/api
+RUN chmod +x /docker-entrypoint.sh
+
+# Environment variables - use simple BASE_URL and API_URL
+ENV BASE_URL=http://localhost:3000
+ENV API_URL=http://localhost:8080
 ENV NITRO_PORT=3000
 
 EXPOSE 3000
@@ -31,4 +34,5 @@ EXPOSE 3000
 RUN addgroup -S app && adduser -S app -G app \
   && chown -R app:app /app
 USER app
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["node", ".output/server/index.mjs"]

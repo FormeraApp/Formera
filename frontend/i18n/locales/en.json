@@ -56,6 +56,7 @@
 		"saveError": "Error saving settings",
 		"loadingSettings": "Loading settings...",
 		"loadError": "Settings could not be loaded.",
+		"noPermission": "You don't have permission to access settings. Only administrators can manage settings.",
 		"tabs": {
 			"general": "General",
 			"design": "Design",
@@ -66,6 +67,14 @@
 			"application": "Application",
 			"appName": "App Name",
 			"appNameHint": "The name is displayed in the header and footer.",
+			"localization": "Language & Theme",
+			"language": "Language",
+			"languageHint": "Select the default language for the application.",
+			"theme": "Theme",
+			"themeHint": "Choose the color scheme for the interface.",
+			"themeSystem": "System",
+			"themeLight": "Light",
+			"themeDark": "Dark",
 			"security": "Security",
 			"allowRegistration": "Allow public registration",
 			"allowRegistrationHint": "If disabled, new users cannot register themselves."
@@ -202,6 +211,8 @@
 			"savedMessage": "Changes saved successfully",
 			"saveFailed": "Save failed",
 			"saveFailedMessage": "Changes could not be saved",
+			"noChanges": "No changes",
+			"noChangesMessage": "There are no unsaved changes",
 			"tabs": {
 				"designer": "Designer",
 				"settings": "Settings"

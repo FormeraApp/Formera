@@ -243,7 +243,8 @@ func (h *FormHandler) Update(c *gin.Context) {
 	if req.Slug != nil {
 		slug := *req.Slug
 		if slug == "" {
-			form.Slug = ""
+			// When slug is cleared, use first 8 chars of ID (form accessible via ID)
+			form.Slug = form.ID[:8]
 		} else {
 			slug = normalizeSlug(slug)
 			if !isValidSlug(slug) {

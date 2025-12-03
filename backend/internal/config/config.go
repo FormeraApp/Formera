@@ -32,7 +32,7 @@ func init() {
 type Config struct {
 	Port       string
 	BaseURL    string // Frontend URL (e.g., http://localhost:3000)
-	ApiURL     string // Backend API URL (e.g., http://localhost:8080/api)
+	ApiURL     string // Backend base URL (e.g., http://localhost:8080)
 	DBPath     string
 	JWTSecret  string
 	CorsOrigin string
@@ -100,7 +100,7 @@ func Load() *Config {
 
 	port := getEnv("PORT", "8080")
 	baseURL := getEnv("BASE_URL", "http://localhost:3000")
-	apiURL := getEnv("API_URL", "http://localhost:"+port+"/api")
+	apiURL := getEnv("API_URL", "http://localhost:"+port)
 
 	// CORS_ORIGIN defaults to BASE_URL if not set (same-origin deployment)
 	corsOrigin := getEnv("CORS_ORIGIN", "")

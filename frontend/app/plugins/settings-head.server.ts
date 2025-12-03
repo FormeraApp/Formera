@@ -23,13 +23,17 @@ export default defineNuxtPlugin(async () => {
 	let faviconUrl = defaults.favicon;
 	let logoUrl = "";
 	let appName = defaults.title;
+	let language = "en";
+	let theme: "light" | "dark" | "system" = "system";
 
 	try {
 		const response = await $fetch<{
 			app_name: string;
 			favicon_url: string;
 			logo_url: string;
-		}>(`${apiUrl}/setup/status`);
+			language: string;
+			theme: "light" | "dark" | "system";
+		}>(`${apiUrl}/api/setup/status`);
 
 		if (response.favicon_url) {
 			faviconUrl = getServerFileUrl(response.favicon_url, apiUrl);
@@ -40,9 +44,26 @@ export default defineNuxtPlugin(async () => {
 		if (response.app_name) {
 			appName = response.app_name;
 		}
+		if (response.language) {
+			language = response.language;
+		}
+		if (response.theme) {
+			theme = response.theme;
+		}
 	} catch {
 		// API not available during build, use defaults
 	}
+
+	// For SSR, we can only apply light/dark directly
+	// "system" preference requires client-side JS, so default to light on server
+	const effectiveTheme = theme === "system" ? "light" : theme;
+
+	// Inline script to immediately apply system theme preference before paint
+	// This prevents flash when theme is set to "system"
+	const themeScript =
+		theme === "system"
+			? `(function(){var d=document.documentElement;if(window.matchMedia('(prefers-color-scheme:dark)').matches){d.setAttribute('data-theme','dark')}})();`
+			: "";
 
 	useSeoMeta({
 		description: defaults.description,
@@ -59,7 +80,8 @@ export default defineNuxtPlugin(async () => {
 
 	useHead({
 		htmlAttrs: {
-			lang: "en",
+			lang: language,
+			"data-theme": effectiveTheme,
 		},
 		title: appName,
 		link: [
@@ -72,6 +94,8 @@ export default defineNuxtPlugin(async () => {
 			{ name: "keywords", content: defaults.keywords },
 		],
 		script: [
+			// Inline script to apply system theme before paint (prevents flash)
+			...(themeScript ? [{ innerHTML: themeScript, tagPosition: "head" as const }] : []),
 			{
 				src: "https://kit.fontawesome.com/b0b0028fa2.js",
 				crossorigin: "anonymous",

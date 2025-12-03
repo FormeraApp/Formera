@@ -65,8 +65,7 @@ const updateDesign = (key: string, value: unknown) => {
 };
 
 const handleSlugInput = (event: Event) => {
-	const input = event.target as HTMLInputElement;
-	emit("slugInput", input.value);
+	emit("slugInput", event);
 };
 
 const handleCopyLink = async () => {

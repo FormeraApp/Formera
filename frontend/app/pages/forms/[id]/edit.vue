@@ -59,6 +59,7 @@ const onSlugInput = (event: Event) => {
 	const normalized = normalizeSlug(input.value);
 	slugInput.value = normalized;
 	checkSlug(normalized);
+	markDirty();
 };
 
 const selectedField = computed(() => fields.value.find((f) => f.id === selectedFieldId.value));
@@ -93,6 +94,9 @@ const { isSaving, isDirty, statusText, markDirty, saveNow } = useAutoSave({
 	},
 	onError: () => {
 		toastStore.error(t("forms.editor.saveFailed"), t("forms.editor.saveFailedMessage"));
+	},
+	onNoChanges: () => {
+		toastStore.info(t("forms.editor.noChanges"), t("forms.editor.noChangesMessage"));
 	},
 });
 
@@ -137,11 +141,11 @@ const loadForm = async () => {
 };
 
 const addField = (type: FieldType) => {
-	const meta = FIELD_META[type];
 	const newField: FormField = {
 		id: `field_${Date.now()}`,
 		type,
-		label: meta.label,
+		label: t(`fields.${type}.label`),
+		description: t(`fields.${type}.description`),
 		required: false,
 		order: fields.value.length,
 		options: ["select", "radio", "checkbox", "dropdown"].includes(type) ? ["Option 1", "Option 2"] : undefined,
@@ -334,8 +338,8 @@ const updateFormFromSettings = (updatedForm: Form) => {
 				:password-input="passwordInput"
 				:form-link="formLink"
 				@update:form="updateFormFromSettings"
-				@update:password-enabled="passwordEnabled = $event"
-				@update:password-input="passwordInput = $event"
+				@update:password-enabled="passwordEnabled = $event; markDirty()"
+				@update:password-input="passwordInput = $event; markDirty()"
 				@slug-input="onSlugInput"
 				@mark-dirty="markDirty"
 			/>
@@ -495,7 +499,7 @@ const updateFormFromSettings = (updatedForm: Form) => {
 
 .settings-view {
 	flex: 1;
-	overflow: hidden;
+	overflow-y: auto;
 }
 
 .sidebar {

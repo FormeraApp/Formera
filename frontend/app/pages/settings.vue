@@ -1,11 +1,22 @@
 <script lang="ts" setup>
 import type { FooterLink, UserRole } from "~~/shared/types";
 
-const { t, locale } = useI18n();
+const { t, locale, setLocale, locales } = useI18n();
 const { settingsApi, usersApi, uploadApi } = useApi();
 const authStore = useAuthStore();
 const setupStore = useSetupStore();
+const themeStore = useThemeStore();
 const localePath = useLocalePath();
+
+// Available locales for the dropdown
+const availableLocales = computed(() =>
+	locales.value.map((l) => {
+		if (typeof l === "string") {
+			return { code: l, name: l };
+		}
+		return { code: l.code, name: l.name || l.code };
+	})
+);
 
 // Active tab
 const activeTab = ref<"general" | "design" | "footer" | "users">("general");
@@ -15,6 +26,7 @@ const settings = ref<Settings | null>(null);
 const isLoading = ref(true);
 const isSaving = ref(false);
 const message = ref<{ type: "success" | "error"; text: string } | null>(null);
+const loadError = ref<"permission" | "generic" | null>(null);
 
 // Footer links state
 const footerLinks = ref<FooterLink[]>([]);
@@ -28,6 +40,10 @@ const loginBackgroundURL = ref("");
 const isUploadingLogo = ref(false);
 const isUploadingFavicon = ref(false);
 const isUploadingLoginBackground = ref(false);
+
+// Language and Theme state
+const selectedLanguage = ref("en");
+const selectedTheme = ref<"light" | "dark" | "system">("system");
 
 // Users state
 const users = ref<User[]>([]);
@@ -53,8 +69,17 @@ const loadSettings = async () => {
 		logoShowText.value = data.logo_show_text ?? true;
 		faviconURL.value = data.favicon_url || "";
 		loginBackgroundURL.value = data.login_background_url || "";
+		selectedLanguage.value = data.language || "en";
+		selectedTheme.value = data.theme || "system";
+		loadError.value = null;
 	} catch (error) {
 		console.error("Failed to load settings:", error);
+		// Check if it's a permission error (403 Forbidden)
+		if (error instanceof Error && error.message.toLowerCase().includes("forbidden")) {
+			loadError.value = "permission";
+		} else {
+			loadError.value = "generic";
+		}
 	} finally {
 		isLoading.value = false;
 	}
@@ -86,7 +111,15 @@ const handleSave = async () => {
 			logo_show_text: logoShowText.value,
 			favicon_url: faviconURL.value,
 			login_background_url: loginBackgroundURL.value,
+			language: selectedLanguage.value,
+			theme: selectedTheme.value,
 		});
+		// Apply language change immediately
+		if (selectedLanguage.value !== locale.value) {
+			setLocale(selectedLanguage.value);
+		}
+		// Apply theme change immediately
+		themeStore.setPreference(selectedTheme.value);
 		settings.value = updated;
 		message.value = { type: "success", text: t("settings.saved") };
 		// Refresh setup store to update globally
@@ -281,8 +314,12 @@ onMounted(() => {
 			<p>{{ $t("settings.loadingSettings") }}</p>
 		</div>
 
-		<div v-else-if="!settings" class="error-state">
-			<p>{{ $t("settings.loadError") }}</p>
+		<div v-else-if="loadError" class="error-state">
+			<UISysIcon :icon="loadError === 'permission' ? 'fa-solid fa-lock' : 'fa-solid fa-exclamation-circle'" />
+			<p>{{ loadError === 'permission' ? $t("settings.noPermission") : $t("settings.loadError") }}</p>
+			<NuxtLink v-if="loadError === 'permission'" class="btn btn-secondary" :to="localePath('/forms')">
+				{{ $t("common.back") }}
+			</NuxtLink>
 		</div>
 
 		<template v-else>
@@ -336,6 +373,35 @@ onMounted(() => {
 							<label class="label" for="appName">{{ $t("settings.general.appName") }}</label>
 							<input id="appName" v-model="settings.app_name" class="input" type="text" />
 							<p class="form-hint">{{ $t("settings.general.appNameHint") }}</p>
+						</div>
+					</div>
+				</div>
+
+				<div class="card">
+					<div class="card-header">
+						<UISysIcon icon="fa-solid fa-globe" />
+						<h2>{{ $t("settings.general.localization") }}</h2>
+					</div>
+					<div class="card-body">
+						<div class="form-row">
+							<div class="form-group">
+								<label class="label" for="language">{{ $t("settings.general.language") }}</label>
+								<select id="language" v-model="selectedLanguage" class="input">
+									<option v-for="loc in availableLocales" :key="loc.code" :value="loc.code">
+										{{ loc.name }}
+									</option>
+								</select>
+								<p class="form-hint">{{ $t("settings.general.languageHint") }}</p>
+							</div>
+							<div class="form-group">
+								<label class="label" for="theme">{{ $t("settings.general.theme") }}</label>
+								<select id="theme" v-model="selectedTheme" class="input">
+									<option value="system">{{ $t("settings.general.themeSystem") }}</option>
+									<option value="light">{{ $t("settings.general.themeLight") }}</option>
+									<option value="dark">{{ $t("settings.general.themeDark") }}</option>
+								</select>
+								<p class="form-hint">{{ $t("settings.general.themeHint") }}</p>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -686,10 +752,24 @@ onMounted(() => {
 .loading,
 .error-state {
 	display: flex;
+	flex-direction: column;
+	gap: 1rem;
 	justify-content: center;
 	align-items: center;
 	min-height: 200px;
 	color: var(--text-secondary);
+	text-align: center;
+	padding: 2rem;
+}
+
+.error-state i {
+	font-size: 2.5rem;
+	opacity: 0.6;
+}
+
+.error-state p {
+	max-width: 400px;
+	line-height: 1.5;
 }
 
 /* Page Header */
@@ -847,11 +927,21 @@ onMounted(() => {
 }
 
 /* Form */
+.form-row {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 1rem;
+}
+
 .form-group {
 	margin-bottom: 1.25rem;
 }
 
 .form-group:last-child {
+	margin-bottom: 0;
+}
+
+.form-row .form-group {
 	margin-bottom: 0;
 }
 
