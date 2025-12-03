@@ -28,4 +28,7 @@ ENV NITRO_PORT=3000
 
 EXPOSE 3000
 
+RUN addgroup -S app && adduser -S app -G app \
+  && chown -R app:app /app
+USER app
 CMD ["node", ".output/server/index.mjs"]
