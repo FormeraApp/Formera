@@ -30,11 +30,10 @@ Self-hosted form builder. Privacy-friendly alternative to Google Forms.
 
 ```bash
 docker run -d \
-  -p 8080:8080 \
+  -p 8080:80 \
   -v formera-data:/app/data \
   -e BASE_URL=https://forms.example.com \
   -e JWT_SECRET=your-secure-secret-here \
-  -e PORT=8080 \
   ghcr.io/formeraapp/formera:latest
 ```
 
@@ -47,14 +46,13 @@ services:
     container_name: formera
     restart: unless-stopped
     environment:
-      - PORT=8080
       - BASE_URL=https://forms.example.com
       - JWT_SECRET=your-secure-secret-here
       # - CORS_ORIGIN=https://other-domain.com  # Optional: only if frontend is on different domain
     volumes:
       - formera-data:/app/data
     ports:
-      - "8080:8080"
+      - "8080:80"
 
 volumes:
   formera-data:
