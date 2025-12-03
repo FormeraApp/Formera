@@ -43,7 +43,7 @@ export default defineNuxtConfig({
 	},
 
 	nitro: {
-		preset: "static",
+		preset: "node-server",
 		esbuild: {
 			options: {
 				target: "esnext",
@@ -111,9 +111,10 @@ export default defineNuxtConfig({
 
 	runtimeConfig: {
 		public: {
-			apiUrl: process.env.BASE_URL ? `${process.env.BASE_URL}/api` : "http://localhost:8080/api",
-			siteUrl: process.env.BASE_URL || "http://localhost:3000",
-			indexable: process.env.NUXT_PUBLIC_INDEXABLE !== "false",
+			// These can be overridden at runtime via NUXT_PUBLIC_* env vars
+			apiUrl: "/api",
+			siteUrl: "http://localhost:3000",
+			indexable: true,
 			VERSION: pkg.version,
 			defaults: {
 				title: "Formera",
@@ -138,9 +139,9 @@ export default defineNuxtConfig({
 	},
 
 	site: {
-		url: process.env.BASE_URL || "http://localhost:3000",
+		url: "http://localhost:3000",
 		name: "Formera",
-		indexable: process.env.NUXT_PUBLIC_INDEXABLE !== "false",
+		indexable: true,
 	},
 
 	robots: {
