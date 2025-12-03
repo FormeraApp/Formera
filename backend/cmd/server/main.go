@@ -180,8 +180,8 @@ func initStorage(cfg *config.Config) (storage.Storage, error) {
 		return s3Store, nil
 	default:
 		// Build full URL for local storage (ApiURL + LocalURL path)
-		ApiURL := cfg.ApiURL + cfg.Storage.LocalURL
-		return storage.NewLocalStorage(cfg.Storage.LocalPath, ApiURL)
+		apiURL := cfg.ApiURL + cfg.Storage.LocalURL
+		return storage.NewLocalStorage(cfg.Storage.LocalPath, apiURL)
 	}
 }
 
