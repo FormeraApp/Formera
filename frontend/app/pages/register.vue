@@ -1,8 +1,4 @@
 <script lang="ts" setup>
-definePageMeta({
-	layout: "auth",
-});
-
 const { t } = useI18n();
 const authStore = useAuthStore();
 const setupStore = useSetupStore();

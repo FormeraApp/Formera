@@ -26,33 +26,32 @@ Self-hosted form builder. Privacy-friendly alternative to Google Forms.
 
 ## Quick Start
 
-### Docker
-
-```bash
-docker run -d \
-  -p 8080:80 \
-  -v formera-data:/app/data \
-  -e BASE_URL=https://forms.example.com \
-  -e JWT_SECRET=your-secure-secret-here \
-  ghcr.io/formeraapp/formera:latest
-```
-
-### Docker Compose
+### Docker Compose (Recommended)
 
 ```yaml
 services:
-  formera:
-    image: ghcr.io/formeraapp/formera:latest
-    container_name: formera
+  backend:
+    image: ghcr.io/formeraapp/formera-backend:latest
+    container_name: formera-backend
     restart: unless-stopped
-    environment:
-      - BASE_URL=https://forms.example.com
-      - JWT_SECRET=your-secure-secret-here
-      # - CORS_ORIGIN=https://other-domain.com  # Optional: only if frontend is on different domain
+    ports:
+      - "8080:8080"
     volumes:
       - formera-data:/app/data
+    environment:
+      - JWT_SECRET=your-secure-secret-here  # CHANGE IN PRODUCTION!
+
+  frontend:
+    image: ghcr.io/formeraapp/formera-frontend:latest
+    container_name: formera-frontend
+    restart: unless-stopped
     ports:
-      - "8080:80"
+      - "3000:3000"
+    environment:
+      - NUXT_PUBLIC_BASE_URL=http://localhost:3000
+      - NUXT_PUBLIC_API_URL=http://localhost:8080/api
+    depends_on:
+      - backend
 
 volumes:
   formera-data:
@@ -62,13 +61,33 @@ volumes:
 docker compose up -d
 ```
 
-Access at `http://localhost`. Setup wizard appears on first start.
+Access at `http://localhost:3000`. Setup wizard appears on first start.
+
+### Docker (Separate Containers)
+
+**Backend:**
+```bash
+docker run -d \
+  -p 8080:8080 \
+  -v formera-data:/app/data \
+  -e JWT_SECRET=your-secure-secret-here \
+  ghcr.io/formeraapp/formera-backend:latest
+```
+
+**Frontend:**
+```bash
+docker run -d \
+  -p 3000:3000 \
+  -e NUXT_PUBLIC_BASE_URL=http://localhost:3000 \
+  -e NUXT_PUBLIC_API_URL=http://localhost:8080/api \
+  ghcr.io/formeraapp/formera-frontend:latest
+```
 
 ### Development
 
 ```bash
 # Backend
-cd backend && go run ./cmd/server
+cd backend && go run ./cmd/server serve
 
 # Frontend
 cd frontend && yarn install && yarn dev
@@ -76,20 +95,21 @@ cd frontend && yarn install && yarn dev
 
 ## Configuration
 
-### Main
+### Frontend
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `BASE_URL` | Public URL of the application | `http://localhost:8080` |
-| `CORS_ORIGIN` | Allowed origin (optional, defaults to BASE_URL) | - |
-| `JWT_SECRET` | JWT signing key (change in production!) | - |
+| `NUXT_PUBLIC_BASE_URL` | Public URL of the frontend | `http://localhost:3000` |
+| `NUXT_PUBLIC_API_URL` | Backend API URL | `http://localhost:8080/api` |
 
-### Server
+### Backend
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `PORT` | Backend port | `8080` |
 | `DB_PATH` | SQLite database path | `./data/formera.db` |
+| `JWT_SECRET` | JWT signing key (change in production!) | - |
+| `CORS_ORIGIN` | Allowed origin (optional) | - |
 
 ### Storage
 
@@ -131,7 +151,41 @@ cd frontend && yarn install && yarn dev
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `NUXT_PUBLIC_INDEXABLE` | Allow search engine indexing | `true` |
+| `PUBLIC_INDEXABLE` | Allow search engine indexing | `true` |
+
+## Production Setup with Reverse Proxy
+
+Example with Traefik:
+
+```yaml
+services:
+  backend:
+    image: ghcr.io/formeraapp/formera-backend:latest
+    restart: unless-stopped
+    volumes:
+      - formera-data:/app/data
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGIN=https://forms.example.com
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.formera-api.rule=Host(`forms.example.com`) && PathPrefix(`/api`)"
+      - "traefik.http.services.formera-api.loadbalancer.server.port=8080"
+
+  frontend:
+    image: ghcr.io/formeraapp/formera-frontend:latest
+    restart: unless-stopped
+    environment:
+      - NUXT_PUBLIC_BASE_URL=https://forms.example.com
+      - NUXT_PUBLIC_API_URL=https://forms.example.com/api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.formera.rule=Host(`forms.example.com`)"
+      - "traefik.http.services.formera.loadbalancer.server.port=3000"
+
+volumes:
+  formera-data:
+```
 
 ## Testing
 

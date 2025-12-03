@@ -6,14 +6,15 @@ export const getFileUrl = (pathOrUrl: string | undefined | null): string => {
 	}
 
 	const config = useRuntimeConfig();
-	const apiUrl = config.public.apiUrl;
+	const apiUrl = config.public.apiUrl as string;
+
 	const cleanPath = pathOrUrl.startsWith("/") ? pathOrUrl.slice(1) : pathOrUrl;
 	return `${apiUrl}/files/${cleanPath}`;
 };
 
 export const useApi = () => {
 	const config = useRuntimeConfig();
-	const apiUrl = config.public.apiUrl;
+	const apiUrl = config.public.apiUrl as string;
 
 	const getToken = () => {
 		return localStorage.getItem("token");

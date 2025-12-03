@@ -1,4 +1,3 @@
-import process from "node:process";
 import tailwindcss from "@tailwindcss/vite";
 import pkg from "./package.json";
 
@@ -111,9 +110,9 @@ export default defineNuxtConfig({
 
 	runtimeConfig: {
 		public: {
-			// These can be overridden at runtime via NUXT_PUBLIC_* env vars
-			apiUrl: "/api",
-			siteUrl: "http://localhost:3000",
+			// Override at runtime with NUXT_PUBLIC_BASE_URL and NUXT_PUBLIC_API_URL
+			baseUrl: "http://localhost:3000",
+			apiUrl: "http://localhost:8080/api",
 			indexable: true,
 			VERSION: pkg.version,
 			defaults: {
@@ -139,17 +138,16 @@ export default defineNuxtConfig({
 	},
 
 	site: {
-		url: "http://localhost:3000",
+		url: process.env.NUXT_PUBLIC_BASE_URL || "http://localhost:3000",
 		name: "Formera",
 		indexable: true,
 	},
 
 	robots: {
-		disallow: process.env.NUXT_PUBLIC_INDEXABLE === "false" ? ["/"] : ["/login", "/register", "/setup", "/settings"],
+		disallow: ["/login", "/register", "/setup", "/settings"],
 	},
 
 	sitemap: {
-		enabled: process.env.NUXT_PUBLIC_INDEXABLE !== "false",
 		exclude: ["/login", "/register", "/setup", "/settings", "/forms/**"],
 	},
 });

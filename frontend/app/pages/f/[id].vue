@@ -1,8 +1,4 @@
 <script lang="ts" setup>
-definePageMeta({
-	layout: "public",
-});
-
 const route = useRoute();
 const { formsApi, submissionsApi } = useApi();
 const { validateField } = useFieldValidation();
