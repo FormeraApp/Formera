@@ -49,8 +49,11 @@ type Settings struct {
 	LogoShowText       bool   `json:"logo_show_text" gorm:"default:true"`
 	FaviconURL         string `json:"favicon_url"`
 	LoginBackgroundURL string `json:"login_background_url"`
-	CreatedAt          time.Time `json:"created_at"`
-	UpdatedAt          time.Time `json:"updated_at"`
+	// Language and Theme
+	Language string `json:"language" gorm:"default:en"`
+	Theme    string `json:"theme" gorm:"default:system"` // "light", "dark", or "system"
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func GetDefaultSettings() *Settings {
@@ -65,5 +68,7 @@ func GetDefaultSettings() *Settings {
 		LogoShowText:       true,
 		FaviconURL:         "",
 		LoginBackgroundURL: "",
+		Language:           "en",
+		Theme:              "system",
 	}
 }

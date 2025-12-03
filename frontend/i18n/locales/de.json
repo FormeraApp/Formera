@@ -56,6 +56,7 @@
 		"saveError": "Fehler beim Speichern",
 		"loadingSettings": "Einstellungen werden geladen...",
 		"loadError": "Einstellungen konnten nicht geladen werden.",
+		"noPermission": "Sie haben keine Berechtigung auf die Einstellungen zuzugreifen. Nur Administratoren können Einstellungen verwalten.",
 		"tabs": {
 			"general": "Allgemein",
 			"design": "Design",
@@ -66,6 +67,14 @@
 			"application": "Anwendung",
 			"appName": "App-Name",
 			"appNameHint": "Der Name wird im Header und Footer angezeigt.",
+			"localization": "Sprache & Design",
+			"language": "Sprache",
+			"languageHint": "Wählen Sie die Standardsprache für die Anwendung.",
+			"theme": "Farbschema",
+			"themeHint": "Wählen Sie das Farbschema für die Benutzeroberfläche.",
+			"themeSystem": "System",
+			"themeLight": "Hell",
+			"themeDark": "Dunkel",
 			"security": "Sicherheit",
 			"allowRegistration": "Öffentliche Registrierung erlauben",
 			"allowRegistrationHint": "Wenn deaktiviert, können sich keine neuen Benutzer selbst registrieren."
@@ -202,6 +211,8 @@
 			"savedMessage": "Änderungen wurden erfolgreich gespeichert",
 			"saveFailed": "Speichern fehlgeschlagen",
 			"saveFailedMessage": "Änderungen konnten nicht gespeichert werden",
+			"noChanges": "Keine Änderungen",
+			"noChangesMessage": "Es gibt keine ungespeicherten Änderungen",
 			"tabs": {
 				"designer": "Designer",
 				"settings": "Einstellungen"

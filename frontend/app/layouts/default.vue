@@ -62,7 +62,6 @@
 					</div>
 
 					<div class="action-buttons">
-						<ThemeToggle />
 						<NuxtLink class="action-btn" :to="localePath('/settings')" :title="$t('nav.settings')">
 							<UISysIcon icon="fa-solid fa-gear" />
 						</NuxtLink>
@@ -103,7 +102,6 @@
 					</nav>
 
 					<div class="mobile-footer">
-						<ThemeToggle />
 						<button class="mobile-logout" @click="handleLogout">
 							<UISysIcon icon="fa-solid fa-right-from-bracket" />
 							<span>{{ $t("auth.logout") }}</span>

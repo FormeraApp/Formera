@@ -9,12 +9,13 @@ export const getFileUrl = (pathOrUrl: string | undefined | null): string => {
 	const apiUrl = config.public.apiUrl as string;
 
 	const cleanPath = pathOrUrl.startsWith("/") ? pathOrUrl.slice(1) : pathOrUrl;
-	return `${apiUrl}/files/${cleanPath}`;
+	return `${apiUrl}/uploads/${cleanPath}`;
 };
 
 export const useApi = () => {
 	const config = useRuntimeConfig();
 	const apiUrl = config.public.apiUrl as string;
+	const apiBase = `${apiUrl}/api`;
 
 	const getToken = () => {
 		return localStorage.getItem("token");
@@ -28,7 +29,7 @@ export const useApi = () => {
 			...options.headers,
 		};
 
-		const response = await fetch(`${apiUrl}${endpoint}`, {
+		const response = await fetch(`${apiBase}${endpoint}`, {
 			...options,
 			headers,
 		});
@@ -112,11 +113,11 @@ export const useApi = () => {
 		stats: (formId: string): Promise<FormStats> => request(`/forms/${formId}/stats`),
 		exportCSV: (formId: string): string => {
 			const token = getToken();
-			return `${apiUrl}/forms/${formId}/export/csv?token=${token}`;
+			return `${apiBase}/forms/${formId}/export/csv?token=${token}`;
 		},
 		exportJSON: (formId: string): string => {
 			const token = getToken();
-			return `${apiUrl}/forms/${formId}/export/json?token=${token}`;
+			return `${apiBase}/forms/${formId}/export/json?token=${token}`;
 		},
 	};
 
@@ -169,7 +170,7 @@ export const useApi = () => {
 
 			let response: Response;
 			try {
-				response = await fetch(`${apiUrl}/uploads/image`, {
+				response = await fetch(`${apiBase}/uploads/image`, {
 					method: "POST",
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -194,7 +195,7 @@ export const useApi = () => {
 
 			let response: Response;
 			try {
-				response = await fetch(`${apiUrl}/uploads/file`, {
+				response = await fetch(`${apiBase}/uploads/file`, {
 					method: "POST",
 					headers: {
 						...(token ? { Authorization: `Bearer ${token}` } : {}),

@@ -224,6 +224,8 @@ export interface SetupStatus {
 	logo_show_text: boolean;
 	favicon_url: string;
 	login_background_url: string;
+	language: string;
+	theme: "light" | "dark" | "system";
 }
 
 export interface Settings {
@@ -237,6 +239,8 @@ export interface Settings {
 	logo_show_text: boolean;
 	favicon_url: string;
 	login_background_url: string;
+	language: string;
+	theme: "light" | "dark" | "system";
 	created_at: string;
 	updated_at: string;
 }

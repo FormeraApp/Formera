@@ -11,6 +11,8 @@ export const useSetupStore = defineStore("setup", () => {
 	const logoShowText = ref(true);
 	const faviconURL = ref("");
 	const loginBackgroundURL = ref("");
+	const language = ref("en");
+	const theme = ref<"light" | "dark" | "system">("system");
 	const isLoading = ref(true); // Start with loading true to prevent hydration mismatch
 
 	const logoDisplayURL = computed(() => getFileUrl(logoURL.value));
@@ -38,6 +40,22 @@ export const useSetupStore = defineStore("setup", () => {
 		return `#${((1 << 24) | (R << 16) | (G << 8) | B).toString(16).slice(1)}`;
 	};
 
+	const applyTheme = (themeValue: "light" | "dark" | "system") => {
+		if (import.meta.client) {
+			let effectiveTheme: "light" | "dark";
+			if (themeValue === "system") {
+				effectiveTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+			} else {
+				effectiveTheme = themeValue;
+			}
+			// Only apply if different from current (prevents flash during hydration)
+			const currentTheme = document.documentElement.getAttribute("data-theme");
+			if (currentTheme !== effectiveTheme) {
+				document.documentElement.setAttribute("data-theme", effectiveTheme);
+			}
+		}
+	};
+
 	const loadStatus = async () => {
 		try {
 			const data = await setupApi.getStatus();
@@ -50,7 +68,10 @@ export const useSetupStore = defineStore("setup", () => {
 			logoShowText.value = data.logo_show_text ?? true;
 			faviconURL.value = data.favicon_url || "";
 			loginBackgroundURL.value = data.login_background_url || "";
+			language.value = data.language || "en";
+			theme.value = data.theme || "system";
 			applyPrimaryColor(primaryColor.value);
+			applyTheme(theme.value);
 		} catch (error) {
 			console.error("Failed to load setup status:", error);
 			setupRequired.value = false;
@@ -62,6 +83,8 @@ export const useSetupStore = defineStore("setup", () => {
 			logoShowText.value = true;
 			faviconURL.value = "";
 			loginBackgroundURL.value = "";
+			language.value = "en";
+			theme.value = "system";
 		} finally {
 			isLoading.value = false;
 		}
@@ -86,6 +109,8 @@ export const useSetupStore = defineStore("setup", () => {
 		logoShowText,
 		faviconURL,
 		loginBackgroundURL,
+		language,
+		theme,
 		logoDisplayURL,
 		faviconDisplayURL,
 		loginBackgroundDisplayURL,
@@ -93,5 +118,6 @@ export const useSetupStore = defineStore("setup", () => {
 		loadStatus,
 		refresh,
 		applyPrimaryColor,
+		applyTheme,
 	};
 });

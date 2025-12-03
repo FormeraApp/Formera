@@ -48,8 +48,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NUXT_PUBLIC_BASE_URL=http://localhost:3000
-      - NUXT_PUBLIC_API_URL=http://localhost:8080/api
+      - BASE_URL=http://localhost:3000
+      - API_URL=http://localhost:8080
     depends_on:
       - backend
 
@@ -78,8 +78,8 @@ docker run -d \
 ```bash
 docker run -d \
   -p 3000:3000 \
-  -e NUXT_PUBLIC_BASE_URL=http://localhost:3000 \
-  -e NUXT_PUBLIC_API_URL=http://localhost:8080/api \
+  -e BASE_URL=http://localhost:3000 \
+  -e API_URL=http://localhost:8080 \
   ghcr.io/formeraapp/formera-frontend:latest
 ```
 
@@ -99,8 +99,8 @@ cd frontend && yarn install && yarn dev
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `NUXT_PUBLIC_BASE_URL` | Public URL of the frontend | `http://localhost:3000` |
-| `NUXT_PUBLIC_API_URL` | Backend API URL | `http://localhost:8080/api` |
+| `BASE_URL` | Public URL of the frontend | `http://localhost:3000` |
+| `API_URL` | Backend base URL | `http://localhost:8080` |
 
 ### Backend
 
@@ -176,8 +176,8 @@ services:
     image: ghcr.io/formeraapp/formera-frontend:latest
     restart: unless-stopped
     environment:
-      - NUXT_PUBLIC_BASE_URL=https://forms.example.com
-      - NUXT_PUBLIC_API_URL=https://forms.example.com/api
+      - BASE_URL=https://forms.example.com
+      - API_URL=https://forms.example.com
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.formera.rule=Host(`forms.example.com`)"

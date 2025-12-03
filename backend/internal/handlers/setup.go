@@ -27,6 +27,8 @@ type SetupStatusResponse struct {
 	LogoShowText       bool               `json:"logo_show_text"`
 	FaviconURL         string             `json:"favicon_url"`
 	LoginBackgroundURL string             `json:"login_background_url"`
+	Language           string             `json:"language"`
+	Theme              string             `json:"theme"`
 }
 
 type SetupRequest struct {
@@ -56,6 +58,8 @@ func (h *SetupHandler) GetStatus(c *gin.Context) {
 		LogoShowText:       settings.LogoShowText,
 		FaviconURL:         settings.FaviconURL,
 		LoginBackgroundURL: settings.LoginBackgroundURL,
+		Language:           settings.Language,
+		Theme:              settings.Theme,
 	})
 }
 
@@ -130,6 +134,8 @@ type UpdateSettingsRequest struct {
 	LogoShowText       *bool               `json:"logo_show_text"`
 	FaviconURL         *string             `json:"favicon_url"`
 	LoginBackgroundURL *string             `json:"login_background_url"`
+	Language           string              `json:"language"`
+	Theme              string              `json:"theme"`
 }
 
 func (h *SetupHandler) UpdateSettings(c *gin.Context) {
@@ -165,6 +171,12 @@ func (h *SetupHandler) UpdateSettings(c *gin.Context) {
 	}
 	if req.LoginBackgroundURL != nil {
 		settings.LoginBackgroundURL = *req.LoginBackgroundURL
+	}
+	if req.Language != "" {
+		settings.Language = req.Language
+	}
+	if req.Theme != "" {
+		settings.Theme = req.Theme
 	}
 
 	database.DB.Save(&settings)

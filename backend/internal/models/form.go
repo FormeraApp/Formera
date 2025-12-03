@@ -157,6 +157,11 @@ type Form struct {
 
 func (f *Form) BeforeCreate(tx *gorm.DB) error {
 	f.ID = uuid.New().String()
+	// Auto-generate unique slug from ID if not set
+	if f.Slug == "" {
+		// Use first 8 characters of UUID as slug (unique enough)
+		f.Slug = f.ID[:8]
+	}
 	if f.Status == "" {
 		f.Status = FormStatusDraft
 	}
