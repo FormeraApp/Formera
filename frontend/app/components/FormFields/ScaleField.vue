@@ -1,17 +1,20 @@
 <script lang="ts" setup>
-const props = withDefaults(defineProps<{
-	modelValue?: number;
-	minValue?: number;
-	maxValue?: number;
-	minLabel?: string;
-	maxLabel?: string;
-}>(), {
-	modelValue: 0,
-	minValue: 1,
-	maxValue: 10,
-	minLabel: "",
-	maxLabel: "",
-});
+const props = withDefaults(
+	defineProps<{
+		modelValue?: number;
+		minValue?: number;
+		maxValue?: number;
+		minLabel?: string;
+		maxLabel?: string;
+	}>(),
+	{
+		modelValue: 0,
+		minValue: 1,
+		maxValue: 10,
+		minLabel: "",
+		maxLabel: "",
+	}
+);
 
 const emit = defineEmits<{
 	"update:modelValue": [value: number];

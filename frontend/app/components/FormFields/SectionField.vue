@@ -1,10 +1,13 @@
 <script lang="ts" setup>
-withDefaults(defineProps<{
-	label: string;
-	description?: string;
-}>(), {
-	description: "",
-});
+withDefaults(
+	defineProps<{
+		label: string;
+		description?: string;
+	}>(),
+	{
+		description: "",
+	}
+);
 </script>
 
 <template>

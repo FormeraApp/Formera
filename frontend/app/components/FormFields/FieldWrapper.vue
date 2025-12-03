@@ -1,16 +1,19 @@
 <script lang="ts" setup>
-withDefaults(defineProps<{
-	label: string;
-	description?: string;
-	required?: boolean;
-	error?: string;
-	fieldId?: string;
-}>(), {
-	description: "",
-	required: false,
-	error: "",
-	fieldId: "",
-});
+withDefaults(
+	defineProps<{
+		label: string;
+		description?: string;
+		required?: boolean;
+		error?: string;
+		fieldId?: string;
+	}>(),
+	{
+		description: "",
+		required: false,
+		error: "",
+		fieldId: "",
+	}
+);
 </script>
 
 <template>

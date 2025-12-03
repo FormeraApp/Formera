@@ -1,17 +1,20 @@
 <script lang="ts" setup>
-const props = withDefaults(defineProps<{
-	id?: string;
-	modelValue?: string;
-	type?: "text" | "email" | "phone" | "url";
-	placeholder?: string;
-	required?: boolean;
-}>(), {
-	id: "",
-	modelValue: "",
-	type: "text",
-	placeholder: "",
-	required: false,
-});
+const props = withDefaults(
+	defineProps<{
+		id?: string;
+		modelValue?: string;
+		type?: "text" | "email" | "phone" | "url";
+		placeholder?: string;
+		required?: boolean;
+	}>(),
+	{
+		id: "",
+		modelValue: "",
+		type: "text",
+		placeholder: "",
+		required: false,
+	}
+);
 
 const emit = defineEmits<{
 	"update:modelValue": [value: string];

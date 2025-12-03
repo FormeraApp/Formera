@@ -1,19 +1,22 @@
 <script lang="ts" setup>
-withDefaults(defineProps<{
-	id?: string;
-	modelValue?: string | number;
-	placeholder?: string;
-	required?: boolean;
-	min?: number;
-	max?: number;
-}>(), {
-	id: "",
-	modelValue: "",
-	placeholder: "",
-	required: false,
-	min: undefined,
-	max: undefined,
-});
+withDefaults(
+	defineProps<{
+		id?: string;
+		modelValue?: string | number;
+		placeholder?: string;
+		required?: boolean;
+		min?: number;
+		max?: number;
+	}>(),
+	{
+		id: "",
+		modelValue: "",
+		placeholder: "",
+		required: false,
+		min: undefined,
+		max: undefined,
+	}
+);
 
 const emit = defineEmits<{
 	"update:modelValue": [value: string];

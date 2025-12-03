@@ -1,9 +1,12 @@
 <script lang="ts" setup>
-withDefaults(defineProps<{
-	modelValue?: string;
-}>(), {
-	modelValue: "",
-});
+withDefaults(
+	defineProps<{
+		modelValue?: string;
+	}>(),
+	{
+		modelValue: "",
+	}
+);
 
 const emit = defineEmits<{
 	"update:modelValue": [value: string];

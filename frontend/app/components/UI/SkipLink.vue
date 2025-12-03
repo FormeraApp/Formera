@@ -1,11 +1,14 @@
 <script lang="ts" setup>
-const props = withDefaults(defineProps<{
-	target?: string;
-	label?: string;
-}>(), {
-	target: "#main-content",
-	label: "",
-});
+const props = withDefaults(
+	defineProps<{
+		target?: string;
+		label?: string;
+	}>(),
+	{
+		target: "#main-content",
+		label: "",
+	}
+);
 
 const { t } = useI18n();
 const labelText = computed(() => props.label || t("skipLink.label"));

@@ -5,17 +5,20 @@ import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 
-const props = withDefaults(defineProps<{
-	id?: string;
-	modelValue?: string;
-	placeholder?: string;
-	required?: boolean;
-}>(), {
-	id: "",
-	modelValue: "",
-	placeholder: "",
-	required: false,
-});
+const props = withDefaults(
+	defineProps<{
+		id?: string;
+		modelValue?: string;
+		placeholder?: string;
+		required?: boolean;
+	}>(),
+	{
+		id: "",
+		modelValue: "",
+		placeholder: "",
+		required: false,
+	}
+);
 
 const emit = defineEmits<{
 	"update:modelValue": [value: string];

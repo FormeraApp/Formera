@@ -23,7 +23,6 @@ const toggleCategory = (key: string) => {
 const selectField = (fieldType: FieldType) => {
 	emit("select", fieldType);
 };
-
 </script>
 
 <template>

@@ -1,11 +1,14 @@
 <script lang="ts" setup>
-const props = withDefaults(defineProps<{
-	size?: "sm" | "md" | "lg";
-	label?: string;
-}>(), {
-	size: "md",
-	label: "",
-});
+const props = withDefaults(
+	defineProps<{
+		size?: "sm" | "md" | "lg";
+		label?: string;
+	}>(),
+	{
+		size: "md",
+		label: "",
+	}
+);
 
 const { t } = useI18n();
 const labelText = computed(() => props.label || t("common.loading"));

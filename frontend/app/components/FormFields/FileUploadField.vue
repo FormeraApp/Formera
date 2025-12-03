@@ -8,20 +8,23 @@ interface UploadedFile {
 	mimeType: string;
 }
 
-const props = withDefaults(defineProps<{
-	modelValue?: string[];
-	required?: boolean;
-	multiple?: boolean;
-	allowedTypes?: string[];
-	maxFileSize?: number;
-	fieldId: string;
-}>(), {
-	modelValue: () => [],
-	required: false,
-	multiple: false,
-	allowedTypes: () => [],
-	maxFileSize: 10,
-});
+const props = withDefaults(
+	defineProps<{
+		modelValue?: string[];
+		required?: boolean;
+		multiple?: boolean;
+		allowedTypes?: string[];
+		maxFileSize?: number;
+		fieldId: string;
+	}>(),
+	{
+		modelValue: () => [],
+		required: false,
+		multiple: false,
+		allowedTypes: () => [],
+		maxFileSize: 10,
+	}
+);
 
 const emit = defineEmits<{
 	"update:modelValue": [value: string[]];

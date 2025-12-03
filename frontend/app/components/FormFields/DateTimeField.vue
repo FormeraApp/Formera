@@ -1,15 +1,18 @@
 <script lang="ts" setup>
-withDefaults(defineProps<{
-	id?: string;
-	modelValue?: string;
-	type?: "date" | "time";
-	required?: boolean;
-}>(), {
-	id: "",
-	modelValue: "",
-	type: "date",
-	required: false,
-});
+withDefaults(
+	defineProps<{
+		id?: string;
+		modelValue?: string;
+		type?: "date" | "time";
+		required?: boolean;
+	}>(),
+	{
+		id: "",
+		modelValue: "",
+		type: "date",
+		required: false,
+	}
+);
 
 const emit = defineEmits<{
 	"update:modelValue": [value: string];

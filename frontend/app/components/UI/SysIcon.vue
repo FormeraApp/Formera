@@ -1,10 +1,13 @@
 <script lang="ts" setup>
-withDefaults(defineProps<{
-	icon: string;
-	extraClasses?: string;
-}>(), {
-	extraClasses: "",
-});
+withDefaults(
+	defineProps<{
+		icon: string;
+		extraClasses?: string;
+	}>(),
+	{
+		extraClasses: "",
+	}
+);
 </script>
 
 <template>

@@ -1,10 +1,13 @@
 <script lang="ts" setup>
-withDefaults(defineProps<{
-	label: string;
-	level?: 1 | 2 | 3 | 4;
-}>(), {
-	level: 2,
-});
+withDefaults(
+	defineProps<{
+		label: string;
+		level?: 1 | 2 | 3 | 4;
+	}>(),
+	{
+		level: 2,
+	}
+);
 </script>
 
 <template>

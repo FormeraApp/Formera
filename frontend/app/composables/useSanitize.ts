@@ -21,30 +21,7 @@ export function useSanitize() {
 
 		return DOMPurify.sanitize(html, {
 			// Allow basic formatting tags from rich text editor
-			ALLOWED_TAGS: [
-				"p",
-				"br",
-				"strong",
-				"b",
-				"em",
-				"i",
-				"u",
-				"s",
-				"strike",
-				"ul",
-				"ol",
-				"li",
-				"a",
-				"h1",
-				"h2",
-				"h3",
-				"h4",
-				"h5",
-				"h6",
-				"blockquote",
-				"code",
-				"pre",
-			],
+			ALLOWED_TAGS: ["p", "br", "strong", "b", "em", "i", "u", "s", "strike", "ul", "ol", "li", "a", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "code", "pre"],
 			// Allow safe attributes
 			ALLOWED_ATTR: ["href", "target", "rel"],
 			// Force all links to open in new tab with noopener

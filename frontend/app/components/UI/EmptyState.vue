@@ -1,11 +1,14 @@
 <script lang="ts" setup>
-withDefaults(defineProps<{
-	icon?: string;
-	title: string;
-	description?: string;
-}>(), {
-	icon: "fa-solid fa-inbox",
-});
+withDefaults(
+	defineProps<{
+		icon?: string;
+		title: string;
+		description?: string;
+	}>(),
+	{
+		icon: "fa-solid fa-inbox",
+	}
+);
 </script>
 
 <template>
