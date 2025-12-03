@@ -54,12 +54,12 @@ export default defineNuxtConfig({
 		},
 	},
 
-	sourcemap: { client: "hidden" },
+	sourcemap: { client: false, server: false },
 
 	vite: {
 		build: {
 			chunkSizeWarningLimit: 800,
-			sourcemap: "hidden",
+			sourcemap: false,
 		},
 		plugins: [tailwindcss()],
 	},
