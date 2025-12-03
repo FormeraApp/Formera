@@ -1,17 +1,19 @@
 # Build Frontend (Nuxt)
 FROM node:20-alpine AS frontend-builder
 
+RUN corepack enable && corepack prepare yarn@4.9.4 --activate
+
 WORKDIR /app
 
-COPY frontend/package*.json ./
-RUN npm ci
+COPY frontend/package.json frontend/yarn.lock frontend/.yarnrc.yml ./
+RUN yarn install --immutable
 
 COPY frontend/ .
 
-ARG PUBLIC_API_URL=/api
-ENV PUBLIC_API_URL=$PUBLIC_API_URL
+ARG BASE_URL
+ENV BASE_URL=$BASE_URL
 
-RUN npm run build
+RUN yarn build
 
 # Build Backend
 FROM golang:1.24-alpine AS backend-builder
