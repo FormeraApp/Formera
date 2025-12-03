@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 onMounted(() => {
-	const theme = localStorage.getItem('theme');
+	const theme = localStorage.getItem("theme");
 	if (theme) {
-		document.documentElement.setAttribute('data-theme', theme);
-	} else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-		document.documentElement.setAttribute('data-theme', 'dark');
+		document.documentElement.setAttribute("data-theme", theme);
+	} else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+		document.documentElement.setAttribute("data-theme", "dark");
 	}
 });
 </script>

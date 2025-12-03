@@ -35,7 +35,6 @@ const { t } = useI18n();
 const config = useRuntimeConfig();
 const apiUrl = config.public.apiUrl as string;
 
-
 const uploadedFiles = ref<UploadedFile[]>([]);
 const isUploading = ref(false);
 const uploadError = ref<string | null>(null);
