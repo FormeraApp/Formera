@@ -7,15 +7,38 @@ const localePath = useLocalePath();
 
 const isMobileMenuOpen = ref(false);
 
+// Helper to extract locale prefix from path (e.g., '/de', '/fr')
+function getLocalePrefix(path: string): string | null {
+	const match = path.match(/^\/([a-zA-Z-]{2,5})(?=\/|$)/);
+	return match ? `/${match[1]}` : null;
+}
+
 // Determine layout type based on route
 const layoutType = computed(() => {
 	const path = route.path;
+	const localePrefix = getLocalePrefix(path);
+
+	// Build base paths for matching
+	const base = localePrefix ? localePrefix : "";
+
 	// Auth pages: login, register, setup, index (landing)
-	if (path === "/" || path === "/login" || path === "/register" || path === "/setup" || path.startsWith("/de/login") || path.startsWith("/de/register") || path.startsWith("/de/setup") || path === "/de") {
+	if (
+		path === "/" + (localePrefix ? localePrefix.slice(1) : "") || // e.g., "/de"
+		path === base + "/login" ||
+		path === base + "/register" ||
+		path === base + "/setup" ||
+		path === "/" ||
+		path === "/login" ||
+		path === "/register" ||
+		path === "/setup"
+	) {
 		return "auth";
 	}
 	// Public form pages
-	if (path.startsWith("/f/") || path.startsWith("/de/f/")) {
+	if (
+		path.startsWith(base + "/f/") ||
+		path.startsWith("/f/")
+	) {
 		return "public";
 	}
 	// Dashboard pages (default)
