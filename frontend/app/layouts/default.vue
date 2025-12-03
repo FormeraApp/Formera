@@ -35,10 +35,7 @@ const layoutType = computed(() => {
 		return "auth";
 	}
 	// Public form pages
-	if (
-		path.startsWith(base + "/f/") ||
-		path.startsWith("/f/")
-	) {
+	if (path.startsWith(base + "/f/") || path.startsWith("/f/")) {
 		return "public";
 	}
 	// Dashboard pages (default)
