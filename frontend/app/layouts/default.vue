@@ -1,89 +1,3 @@
-<script lang="ts" setup>
-const authStore = useAuthStore();
-const setupStore = useSetupStore();
-const router = useRouter();
-const route = useRoute();
-const localePath = useLocalePath();
-
-const isMobileMenuOpen = ref(false);
-
-// Helper to extract locale prefix from path (e.g., '/de', '/fr')
-function getLocalePrefix(path: string): string | null {
-	const match = path.match(/^\/([a-zA-Z-]{2,5})(?=\/|$)/);
-	return match ? `/${match[1]}` : null;
-}
-
-// Determine layout type based on route
-const layoutType = computed(() => {
-	const path = route.path;
-	const localePrefix = getLocalePrefix(path);
-
-	// Build base paths for matching
-	const base = localePrefix ? localePrefix : "";
-
-	// Auth pages: login, register, setup, index (landing)
-	if (
-		path === "/" + (localePrefix ? localePrefix.slice(1) : "") || // e.g., "/de"
-		path === base + "/login" ||
-		path === base + "/register" ||
-		path === base + "/setup" ||
-		path === "/" ||
-		path === "/login" ||
-		path === "/register" ||
-		path === "/setup"
-	) {
-		return "auth";
-	}
-	// Public form pages
-	if (path.startsWith(base + "/f/") || path.startsWith("/f/")) {
-		return "public";
-	}
-	// Dashboard pages (default)
-	return "dashboard";
-});
-
-const isAuthLayout = computed(() => layoutType.value === "auth");
-const isPublicLayout = computed(() => layoutType.value === "public");
-const isDashboardLayout = computed(() => layoutType.value === "dashboard");
-
-// Auth layout background style
-const backgroundStyle = computed(() => {
-	if (!isAuthLayout.value) return {};
-	if (setupStore.loginBackgroundDisplayURL) {
-		return {
-			backgroundImage: `url(${setupStore.loginBackgroundDisplayURL})`,
-			backgroundSize: "cover",
-			backgroundPosition: "center",
-			backgroundRepeat: "no-repeat",
-		};
-	}
-	return {
-		background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-	};
-});
-
-const handleLogout = () => {
-	authStore.logout();
-	router.push(localePath("/login"));
-};
-
-const toggleMobileMenu = () => {
-	isMobileMenuOpen.value = !isMobileMenuOpen.value;
-};
-
-const closeMobileMenu = () => {
-	isMobileMenuOpen.value = false;
-};
-
-// Close mobile menu on route change
-watch(
-	() => route.path,
-	() => {
-		closeMobileMenu();
-	}
-);
-</script>
-
 <template>
 	<!-- Auth Layout (login, register, setup) -->
 	<div v-if="isAuthLayout" class="auth-layout" :style="backgroundStyle">
@@ -223,6 +137,87 @@ watch(
 		</footer>
 	</div>
 </template>
+
+<script lang="ts" setup>
+const authStore = useAuthStore();
+const setupStore = useSetupStore();
+const router = useRouter();
+const route = useRoute();
+const localePath = useLocalePath();
+
+const isMobileMenuOpen = ref(false);
+
+// Helper to extract locale prefix from path (e.g., '/de', '/fr')
+function getLocalePrefix(path: string): string | null {
+	const match = path.match(/^\/([a-zA-Z-]{2,5})(?=\/|$)/);
+	return match ? `/${match[1]}` : null;
+}
+
+// Determine layout type based on route
+const layoutType = computed(() => {
+	const path = route.path;
+	const localePrefix = getLocalePrefix(path);
+
+	// Build base paths for matching
+	const base = localePrefix ? localePrefix : "";
+
+	// Auth pages: login, register, setup, index (landing)
+	if (
+		path === "/" ||
+		path === "/login" ||
+		path === "/register" ||
+		path === "/setup"
+	) {
+		return "auth";
+	}
+	// Public form pages
+	if (path.startsWith(base + "/f/") || path.startsWith("/f/")) {
+		return "public";
+	}
+	// Dashboard pages (default)
+	return "dashboard";
+});
+
+const isAuthLayout = computed(() => layoutType.value === "auth");
+const isPublicLayout = computed(() => layoutType.value === "public");
+
+// Auth layout background style
+const backgroundStyle = computed(() => {
+	if (!isAuthLayout.value) return {};
+	if (setupStore.loginBackgroundDisplayURL) {
+		return {
+			backgroundImage: `url(${setupStore.loginBackgroundDisplayURL})`,
+			backgroundSize: "cover",
+			backgroundPosition: "center",
+			backgroundRepeat: "no-repeat",
+		};
+	}
+	return {
+		background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+	};
+});
+
+const handleLogout = () => {
+	authStore.logout();
+	router.push(localePath("/login"));
+};
+
+const toggleMobileMenu = () => {
+	isMobileMenuOpen.value = !isMobileMenuOpen.value;
+};
+
+const closeMobileMenu = () => {
+	isMobileMenuOpen.value = false;
+};
+
+// Close mobile menu on route change
+watch(
+	() => route.path,
+	() => {
+		closeMobileMenu();
+	}
+);
+</script>
 
 <style scoped>
 /* ========================================
