@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 const route = useRoute();
+const { t } = useI18n();
 const { formsApi, submissionsApi } = useApi();
 const { validateField } = useFieldValidation();
 
@@ -251,7 +252,7 @@ const validateSingleField = (field: FormField): string => {
 	if (field.type === "file") {
 		const uploadRef = fileUploadRefs.value[field.id];
 		if (field.required && !uploadRef?.hasFiles) {
-			return "Dieses Feld ist erforderlich";
+			return t("validation.required");
 		}
 		return "";
 	}

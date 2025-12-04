@@ -59,7 +59,7 @@ onMounted(() => {
 			id: `existing-${index}`,
 			path,
 			url: getFileUrl(path),
-			filename: path.split("/").pop() || "file",
+			filename: extractFilename(path),
 			size: 0,
 			mimeType: "",
 		}));

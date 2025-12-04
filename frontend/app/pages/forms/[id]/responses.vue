@@ -177,11 +177,6 @@ const getField = (fieldId: string): FormField | undefined => {
 	return formFields.value.find((f) => f.id === fieldId);
 };
 
-// Check if a path is a protected file path (files/*)
-const isProtectedPath = (path: string): boolean => {
-	return path.startsWith("files/") || path.startsWith("/files/");
-};
-
 // File info object for display
 interface FileInfo {
 	url: string;
@@ -190,28 +185,13 @@ interface FileInfo {
 	isImage: boolean;
 }
 
-// Extract filename from path (handles both regular paths and hashed filenames)
-const extractFilename = (path: string): string => {
-	const pathParts = path.split("/");
-	const filename = pathParts.pop() || "";
-	// Return the filename part (could be hashed, but that's what we have)
-	return filename || t("forms.responses.individual.file");
-};
-
-// Check if path points to an image file
-const isImageFile = (path: string): boolean => {
-	return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(path);
-};
-
 const getFileInfos = (value: unknown): FileInfo[] => {
-	const isFilePath = (v: string) => v.startsWith("http") || v.startsWith("/uploads/") || v.startsWith("images/") || v.startsWith("files/");
-
 	const processPath = (path: string): FileInfo => {
 		const cachedUrl = shareUrlCache.value[path];
 		const url = (isProtectedPath(path) && cachedUrl) ? cachedUrl : getFileUrl(path);
 		return {
 			url,
-			filename: extractFilename(path),
+			filename: extractFilename(path, t("forms.responses.individual.file")),
 			originalPath: path,
 			isImage: isImageFile(path),
 		};

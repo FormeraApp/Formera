@@ -215,6 +215,7 @@ func (c *CleanupScheduler) cleanupOrphanedFiles(result *CleanupResult) {
 					continue
 				}
 
+				log.Printf("Deleted orphaned file: %s (%s)", file.ID, file.Filename)
 				result.DeletedFiles++
 				result.DeletedBytes += file.Size
 			}
