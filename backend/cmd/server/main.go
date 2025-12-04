@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -45,7 +46,10 @@ import (
 // @description Type "Bearer" followed by a space and JWT token
 
 func main() {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("Configuration error: %v\n\nPlease set a secure JWT_SECRET environment variable (at least 32 characters).", err)
+	}
 
 	// Initialize logger
 	pkg.InitializeLogger(pkg.LoggerConfig{
@@ -127,9 +131,9 @@ func main() {
 	api := r.Group("/api")
 	api.Use(middleware.APIRateLimiter())
 	{
-		// Setup routes (public)
+		// Setup routes (public) - with strict rate limiting to prevent brute force
 		api.GET("/setup/status", setupHandler.GetStatus)
-		api.POST("/setup/complete", setupHandler.CompleteSetup)
+		api.POST("/setup/complete", middleware.AuthRateLimiter(), setupHandler.CompleteSetup)
 
 		// Auth routes with stricter rate limit (10 req/min per IP)
 		api.POST("/auth/register", middleware.AuthRateLimiter(), authHandler.Register)

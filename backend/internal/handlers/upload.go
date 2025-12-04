@@ -340,6 +340,31 @@ func (h *UploadHandler) DeleteFile(c *gin.Context) {
 		}
 	}
 
+	// Check file ownership - users can only delete their own files (admins can delete any)
+	isAdmin := c.GetString("role") == "admin"
+	var fileRecord storage.FileRecord
+
+	if isAdmin {
+		// Admins can delete any file
+		if err := database.DB.Where("id = ?", fileID).First(&fileRecord).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+			return
+		}
+	} else {
+		// Regular users can only delete their own files
+		if err := database.DB.Where("id = ? AND user_id = ?", fileID, userID).First(&fileRecord).Error; err != nil {
+			// Check if file exists at all (for proper error message)
+			var exists storage.FileRecord
+			if database.DB.Where("id = ?", fileID).First(&exists).Error == nil {
+				// File exists but belongs to another user
+				c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+				return
+			}
+			c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+			return
+		}
+	}
+
 	if err := h.storage.Delete(fileID); err != nil {
 		if err == storage.ErrFileNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})

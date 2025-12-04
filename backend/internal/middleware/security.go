@@ -13,6 +13,10 @@ func SecurityHeaders() gin.HandlerFunc {
 		// Prevent clickjacking
 		c.Header("X-Frame-Options", "DENY")
 
+		// HTTP Strict Transport Security (HSTS)
+		// max-age=31536000 (1 year), includeSubDomains for all subdomains
+		c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+
 		// Enable XSS filter in browsers
 		c.Header("X-XSS-Protection", "1; mode=block")
 

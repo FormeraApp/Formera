@@ -123,13 +123,41 @@ export const useApi = () => {
 				method: "DELETE",
 			}),
 		stats: (formId: string): Promise<FormStats> => request(`/forms/${formId}/stats`),
-		exportCSV: (formId: string): string => {
+		exportCSV: async (formId: string): Promise<void> => {
 			const token = getToken();
-			return `${apiBase}/forms/${formId}/export/csv?token=${token}`;
+			const response = await fetch(`${apiBase}/forms/${formId}/export/csv`, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			});
+			if (!response.ok) throw new Error("Export failed");
+			const blob = await response.blob();
+			const url = window.URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = `submissions-${formId}.csv`;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			window.URL.revokeObjectURL(url);
 		},
-		exportJSON: (formId: string): string => {
+		exportJSON: async (formId: string): Promise<void> => {
 			const token = getToken();
-			return `${apiBase}/forms/${formId}/export/json?token=${token}`;
+			const response = await fetch(`${apiBase}/forms/${formId}/export/json`, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			});
+			if (!response.ok) throw new Error("Export failed");
+			const blob = await response.blob();
+			const url = window.URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = `submissions-${formId}.json`;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			window.URL.revokeObjectURL(url);
 		},
 	};
 

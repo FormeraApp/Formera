@@ -78,8 +78,12 @@ const handleDelete = async (submissionId: string) => {
 	}
 };
 
-const handleExportCSV = () => {
-	window.open(submissionsApi.exportCSV(id), "_blank");
+const handleExportCSV = async () => {
+	try {
+		await submissionsApi.exportCSV(id);
+	} catch (error) {
+		console.error("Failed to export CSV:", error);
+	}
 };
 
 const getFieldType = (fieldId: string): string => {

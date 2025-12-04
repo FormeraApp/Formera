@@ -7,6 +7,7 @@ import (
 	"formera/internal/database"
 	"formera/internal/middleware"
 	"formera/internal/models"
+	"formera/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -63,6 +64,12 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
+	// Validate password complexity
+	if valid, msg := ValidatePasswordComplexity(req.Password); !valid {
+		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		return
+	}
+
 	var existingUser models.User
 	if result := database.DB.Where("email = ?", req.Email).First(&existingUser); result.Error == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Email already registered"})
@@ -83,6 +90,9 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}
+
+	// Log successful registration
+	services.LogRegister(c, user.ID, user.Email)
 
 	token, err := h.generateToken(user)
 	if err != nil {
@@ -117,14 +127,43 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	var user models.User
 	if result := database.DB.Where("email = ?", req.Email).First(&user); result.Error != nil {
+		services.LogLoginFailed(c, req.Email, "user_not_found")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
 
+	// Check if account is locked
+	if user.IsLocked() {
+		services.LogLoginFailed(c, req.Email, "account_locked")
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": "Account temporarily locked. Please try again later."})
+		return
+	}
+
 	if !user.CheckPassword(req.Password) {
+		// Increment failed attempts and save
+		user.IncrementFailedAttempts()
+		database.DB.Save(&user)
+
+		// Log failed attempt
+		services.LogLoginFailed(c, req.Email, "invalid_password")
+
+		// Log if account just got locked
+		if user.IsLocked() {
+			services.LogAccountLocked(c, user.ID, user.Email)
+		}
+
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
+
+	// Reset failed attempts on successful login
+	if user.FailedLoginAttempts > 0 {
+		user.ResetFailedAttempts()
+		database.DB.Save(&user)
+	}
+
+	// Log successful login
+	services.LogLogin(c, user.ID, user.Email)
 
 	token, err := h.generateToken(&user)
 	if err != nil {
