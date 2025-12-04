@@ -26,9 +26,11 @@ type SubmissionListResponse struct {
 	Submissions interface{} `json:"submissions"`
 }
 
-// FormStatsResponse represents form statistics
+// FormStatsResponse represents form statistics including conversion tracking
 type FormStatsResponse struct {
 	TotalSubmissions int                    `json:"total_submissions" example:"150"`
+	TotalViews       int64                  `json:"total_views" example:"1000"`
+	ConversionRate   float64                `json:"conversion_rate" example:"15.0"`
 	FieldStats       map[string]interface{} `json:"field_stats"`
 }
 

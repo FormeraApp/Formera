@@ -150,9 +150,11 @@ type Form struct {
 	// Password protection
 	PasswordProtected bool   `json:"password_protected" gorm:"default:false"`
 	PasswordHash      string `json:"-" gorm:"size:255"` // Never expose hash in JSON
-	CreatedAt         time.Time    `json:"created_at"`
-	UpdatedAt         time.Time    `json:"updated_at"`
-	Submissions       []Submission `json:"submissions,omitempty" gorm:"foreignKey:FormID"`
+	// Analytics (DSGVO-compliant: anonymous counter only, no personal data)
+	ViewCount   int64        `json:"view_count" gorm:"default:0"`
+	CreatedAt   time.Time    `json:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
+	Submissions []Submission `json:"submissions,omitempty" gorm:"foreignKey:FormID"`
 }
 
 func (f *Form) BeforeCreate(tx *gorm.DB) error {

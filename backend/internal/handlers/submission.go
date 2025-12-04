@@ -9,8 +9,7 @@ import (
 
 	"formera/internal/database"
 	"formera/internal/models"
-	"formera/internal/pagination"
-	"formera/internal/sanitizer"
+	"formera/internal/pkg"
 
 	"github.com/gin-gonic/gin"
 )
@@ -133,7 +132,7 @@ func (h *SubmissionHandler) Submit(c *gin.Context) {
 	}
 
 	// Sanitize submission data to prevent XSS
-	sanitizedData := sanitizer.SanitizeSubmissionData(req.Data)
+	sanitizedData := pkg.SanitizeSubmissionData(req.Data)
 
 	submission := &models.Submission{
 		FormID:   formID,
@@ -168,7 +167,7 @@ func (h *SubmissionHandler) Submit(c *gin.Context) {
 func (h *SubmissionHandler) List(c *gin.Context) {
 	userID := c.GetString("user_id")
 	formID := c.Param("id")
-	params := pagination.GetParams(c)
+	params := pkg.GetPaginationParams(c)
 
 	var form models.Form
 	if result := database.DB.Where("id = ? AND user_id = ?", formID, userID).First(&form); result.Error != nil {
@@ -182,7 +181,7 @@ func (h *SubmissionHandler) List(c *gin.Context) {
 	var submissions []models.Submission
 	if result := database.DB.Where("form_id = ?", formID).
 		Order("created_at DESC").
-		Scopes(pagination.Paginate(params)).
+		Scopes(pkg.Paginate(params)).
 		Find(&submissions); result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch submissions"})
 		return
@@ -190,7 +189,7 @@ func (h *SubmissionHandler) List(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"form":        form,
-		"submissions": pagination.CreateResult(submissions, params, totalItems),
+		"submissions": pkg.CreatePaginationResult(submissions, params, totalItems),
 	})
 }
 
@@ -259,7 +258,7 @@ func (h *SubmissionHandler) Delete(c *gin.Context) {
 
 // Stats godoc
 // @Summary      Get form statistics
-// @Description  Get submission statistics for a form
+// @Description  Get submission statistics for a form including views and conversion rate
 // @Tags         Submissions
 // @Produce      json
 // @Param        id path string true "Form ID"
@@ -303,8 +302,16 @@ func (h *SubmissionHandler) Stats(c *gin.Context) {
 		}
 	}
 
+	// Calculate conversion rate (submissions / views)
+	var conversionRate float64
+	if form.ViewCount > 0 {
+		conversionRate = float64(len(submissions)) / float64(form.ViewCount) * 100
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"total_submissions": len(submissions),
+		"total_views":       form.ViewCount,
+		"conversion_rate":   conversionRate,
 		"field_stats":       fieldStats,
 	})
 }

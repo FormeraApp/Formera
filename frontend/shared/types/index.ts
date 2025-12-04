@@ -220,6 +220,8 @@ export interface SubmissionsResponse {
 
 export interface FormStats {
 	total_submissions: number;
+	total_views: number;
+	conversion_rate: number;
 	field_stats: Record<string, Record<string, number>>;
 }
 

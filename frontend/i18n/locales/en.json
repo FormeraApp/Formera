@@ -258,7 +258,9 @@
 				"responses": "Responses",
 				"answersCount": "{count} responses",
 				"more": "+{count} more",
-				"empty": "(Empty)"
+				"empty": "(Empty)",
+				"views": "Views",
+				"conversionRate": "Conversion Rate"
 			},
 			"individual": {
 				"of": "of",

@@ -298,6 +298,14 @@ onMounted(() => {
 						<span class="summary-stat-value">{{ pagination.state.totalItems }}</span>
 						<span class="summary-stat-label">{{ $t("forms.responses.summary.responses") }}</span>
 					</div>
+					<div class="summary-stat">
+						<span class="summary-stat-value">{{ stats?.total_views || 0 }}</span>
+						<span class="summary-stat-label">{{ $t("forms.responses.summary.views") }}</span>
+					</div>
+					<div class="summary-stat">
+						<span class="summary-stat-value">{{ (stats?.conversion_rate || 0).toFixed(1) }}%</span>
+						<span class="summary-stat-label">{{ $t("forms.responses.summary.conversionRate") }}</span>
+					</div>
 				</div>
 
 				<div v-for="field in formFields" :key="field.id" class="summary-card">
@@ -1001,6 +1009,7 @@ onMounted(() => {
 .summary-header-card {
 	display: flex;
 	justify-content: center;
+	gap: 3rem;
 	padding: 2.5rem;
 	background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
 	border-radius: var(--radius-lg);
@@ -1014,7 +1023,7 @@ onMounted(() => {
 }
 
 .summary-stat-value {
-	font-size: 3.5rem;
+	font-size: 2.5rem;
 	font-weight: 700;
 	color: white;
 	line-height: 1;
@@ -1022,7 +1031,7 @@ onMounted(() => {
 
 .summary-stat-label {
 	margin-top: 0.5rem;
-	font-size: 0.9375rem;
+	font-size: 0.875rem;
 	color: rgba(255, 255, 255, 0.85);
 	font-weight: 500;
 }
@@ -1872,11 +1881,13 @@ onMounted(() => {
 	}
 
 	.summary-header-card {
-		padding: 2rem 1.5rem;
+		padding: 1.5rem 1rem;
+		gap: 1.5rem;
+		flex-wrap: wrap;
 	}
 
 	.summary-stat-value {
-		font-size: 2.5rem;
+		font-size: 1.75rem;
 	}
 
 	.export-btn span {

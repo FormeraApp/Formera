@@ -1,4 +1,4 @@
-package sanitizer
+package pkg
 
 import (
 	"github.com/microcosm-cc/bluemonday"

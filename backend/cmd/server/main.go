@@ -11,8 +11,8 @@ import (
 	"formera/internal/config"
 	"formera/internal/database"
 	"formera/internal/handlers"
-	"formera/internal/logger"
 	"formera/internal/middleware"
+	"formera/internal/pkg"
 	"formera/internal/storage"
 
 	"github.com/gin-contrib/cors"
@@ -48,22 +48,22 @@ func main() {
 	cfg := config.Load()
 
 	// Initialize logger
-	logger.Initialize(logger.Config{
+	pkg.InitializeLogger(pkg.LoggerConfig{
 		Level:  cfg.LogLevel,
 		Pretty: cfg.LogPretty,
 	})
 
 	// Initialize database
 	if err := database.Initialize(cfg.DBPath); err != nil {
-		logger.Fatal().Err(err).Msg("Failed to initialize database")
+		pkg.LogFatal().Err(err).Msg("Failed to initialize database")
 	}
 
 	// Initialize storage
 	store, err := initStorage(cfg)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to initialize storage")
+		pkg.LogFatal().Err(err).Msg("Failed to initialize storage")
 	}
-	logger.Info().Str("type", string(store.Type())).Msg("Storage initialized")
+	pkg.LogInfo().Str("type", string(store.Type())).Msg("Storage initialized")
 
 	// Start cleanup scheduler
 	cleanupScheduler := startCleanupScheduler(cfg, store)
@@ -81,19 +81,19 @@ func main() {
 		r.SetTrustedProxies([]string{}) // Trust none
 	} else {
 		if err := r.SetTrustedProxies(cfg.TrustedProxies); err != nil {
-			logger.Fatal().Err(err).Msg("Invalid trusted proxies configuration")
+			pkg.LogFatal().Err(err).Msg("Invalid trusted proxies configuration")
 		}
-		logger.Info().Strs("proxies", cfg.TrustedProxies).Msg("Trusted proxies configured")
+		pkg.LogInfo().Strs("proxies", cfg.TrustedProxies).Msg("Trusted proxies configured")
 	}
 
 	// Configure custom IP header if specified (e.g., CF-Connecting-IP for Cloudflare)
 	if cfg.RealIPHeader != "" {
 		r.RemoteIPHeaders = []string{cfg.RealIPHeader}
-		logger.Info().Str("header", cfg.RealIPHeader).Msg("Using custom IP header")
+		pkg.LogInfo().Str("header", cfg.RealIPHeader).Msg("Using custom IP header")
 	}
 
-	r.Use(logger.GinLogger())
-	r.Use(logger.GinRecovery())
+	r.Use(pkg.GinLogger())
+	r.Use(pkg.GinRecovery())
 	r.Use(middleware.SecurityHeaders())
 
 	// CORS configuration
@@ -230,9 +230,9 @@ func main() {
 
 	// Start server in goroutine
 	go func() {
-		logger.Info().Str("port", cfg.Port).Msg("Server starting")
+		pkg.LogInfo().Str("port", cfg.Port).Msg("Server starting")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatal().Err(err).Msg("Failed to start server")
+			pkg.LogFatal().Err(err).Msg("Failed to start server")
 		}
 	}()
 
@@ -241,7 +241,7 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	logger.Info().Msg("Shutting down server...")
+	pkg.LogInfo().Msg("Shutting down server...")
 
 	// Give outstanding requests 30 seconds to complete
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -252,10 +252,10 @@ func main() {
 
 	// Shutdown HTTP server
 	if err := srv.Shutdown(ctx); err != nil {
-		logger.Error().Err(err).Msg("Server forced to shutdown")
+		pkg.LogError().Err(err).Msg("Server forced to shutdown")
 	}
 
-	logger.Info().Msg("Server exited")
+	pkg.LogInfo().Msg("Server exited")
 }
 
 // initStorage initializes the appropriate storage backend based on configuration
@@ -300,25 +300,25 @@ func migrateLocalToS3(cfg *config.Config, s3Store *storage.S3Storage) {
 		return // No local files to migrate
 	}
 
-	logger.Info().Msg("Checking for local files to migrate to S3...")
+	pkg.LogInfo().Msg("Checking for local files to migrate to S3...")
 
 	result, err := storage.MigrateLocalToS3(localPath, s3Store, cfg.Storage.DeleteAfterMigrate)
 	if err != nil {
-		logger.Error().Err(err).Msg("Migration error")
+		pkg.LogError().Err(err).Msg("Migration error")
 		return
 	}
 
 	if result.MigratedFiles > 0 {
-		logger.Info().
+		pkg.LogInfo().
 			Int("files", result.MigratedFiles).
 			Float64("size_mb", float64(result.MigratedBytes)/(1024*1024)).
 			Msg("Migration complete")
 	}
 
 	if len(result.Errors) > 0 {
-		logger.Warn().Int("count", len(result.Errors)).Msg("Migration had errors")
+		pkg.LogWarn().Int("count", len(result.Errors)).Msg("Migration had errors")
 		for _, e := range result.Errors {
-			logger.Warn().Str("error", e).Msg("Migration error detail")
+			pkg.LogWarn().Str("error", e).Msg("Migration error detail")
 		}
 	}
 }

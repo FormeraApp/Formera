@@ -88,6 +88,10 @@ definitions:
         type: string
       user_id:
         type: string
+      view_count:
+        description: 'Analytics (DSGVO-compliant: anonymous counter only, no personal
+          data)'
+        type: integer
     type: object
   formera_internal_models.FormDesign:
     properties:
@@ -316,7 +320,7 @@ definitions:
     x-enum-varnames:
     - RoleAdmin
     - RoleUser
-  formera_internal_pagination.Result:
+  formera_internal_pkg.PaginationResult:
     properties:
       data: {}
       page:
@@ -375,11 +379,17 @@ definitions:
     type: object
   internal_handlers.FormStatsResponse:
     properties:
+      conversion_rate:
+        example: 15
+        type: number
       field_stats:
         additionalProperties: true
         type: object
       total_submissions:
         example: 150
+        type: integer
+      total_views:
+        example: 1000
         type: integer
     type: object
   internal_handlers.LoginRequest:
@@ -699,7 +709,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/formera_internal_pagination.Result'
+            $ref: '#/definitions/formera_internal_pkg.PaginationResult'
         "401":
           description: Unauthorized
           schema:
@@ -933,7 +943,8 @@ paths:
       - Submissions
   /forms/{id}/stats:
     get:
-      description: Get submission statistics for a form
+      description: Get submission statistics for a form including views and conversion
+        rate
       parameters:
       - description: Form ID
         in: path
@@ -1132,7 +1143,8 @@ paths:
       - Forms
   /public/forms/{id}:
     get:
-      description: Get a published form by ID or slug (public access)
+      description: Get a published form by ID or slug (public access). Increments
+        view counter for analytics.
       parameters:
       - description: Form ID or slug
         in: path

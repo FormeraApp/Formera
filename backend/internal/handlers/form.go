@@ -7,8 +7,7 @@ import (
 
 	"formera/internal/database"
 	"formera/internal/models"
-	"formera/internal/pagination"
-	"formera/internal/sanitizer"
+	"formera/internal/pkg"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -85,8 +84,8 @@ func (h *FormHandler) Create(c *gin.Context) {
 
 	form := &models.Form{
 		UserID:      userID,
-		Title:       sanitizer.StripHTML(req.Title),
-		Description: sanitizer.SanitizeHTML(req.Description),
+		Title:       pkg.StripHTML(req.Title),
+		Description: pkg.SanitizeHTML(req.Description),
 		Fields:      req.Fields,
 		Settings:    req.Settings,
 		Status:      models.FormStatusDraft,
@@ -107,13 +106,13 @@ func (h *FormHandler) Create(c *gin.Context) {
 // @Produce      json
 // @Param        page query int false "Page number" default(1)
 // @Param        page_size query int false "Items per page" default(20)
-// @Success      200 {object} pagination.Result
+// @Success      200 {object} pkg.PaginationResult
 // @Failure      401 {object} ErrorResponse
 // @Security     BearerAuth
 // @Router       /forms [get]
 func (h *FormHandler) List(c *gin.Context) {
 	userID := c.GetString("user_id")
-	params := pagination.GetParams(c)
+	params := pkg.GetPaginationParams(c)
 
 	var totalItems int64
 	database.DB.Model(&models.Form{}).Where("user_id = ?", userID).Count(&totalItems)
@@ -121,13 +120,13 @@ func (h *FormHandler) List(c *gin.Context) {
 	var forms []models.Form
 	if result := database.DB.Where("user_id = ?", userID).
 		Order("created_at DESC").
-		Scopes(pagination.Paginate(params)).
+		Scopes(pkg.Paginate(params)).
 		Find(&forms); result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch forms"})
 		return
 	}
 
-	c.JSON(http.StatusOK, pagination.CreateResult(forms, params, totalItems))
+	c.JSON(http.StatusOK, pkg.CreatePaginationResult(forms, params, totalItems))
 }
 
 // Get godoc
@@ -156,7 +155,7 @@ func (h *FormHandler) Get(c *gin.Context) {
 
 // GetPublic godoc
 // @Summary      Get public form
-// @Description  Get a published form by ID or slug (public access)
+// @Description  Get a published form by ID or slug (public access). Increments view counter for analytics.
 // @Tags         Public
 // @Produce      json
 // @Param        id path string true "Form ID or slug"
@@ -172,6 +171,10 @@ func (h *FormHandler) GetPublic(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Form not found or not published"})
 		return
 	}
+
+	// Increment view count atomically (DSGVO-compliant: no personal data stored)
+	database.DB.Model(&models.Form{}).Where("id = ?", form.ID).UpdateColumn("view_count", form.ViewCount+1)
+	form.ViewCount++
 
 	if form.PasswordProtected {
 		c.JSON(http.StatusOK, gin.H{
@@ -318,10 +321,10 @@ func (h *FormHandler) Update(c *gin.Context) {
 	}
 
 	if req.Title != "" {
-		form.Title = sanitizer.StripHTML(req.Title)
+		form.Title = pkg.StripHTML(req.Title)
 	}
 	if req.Description != "" {
-		form.Description = sanitizer.SanitizeHTML(req.Description)
+		form.Description = pkg.SanitizeHTML(req.Description)
 	}
 	if req.Fields != nil {
 		form.Fields = req.Fields

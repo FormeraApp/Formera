@@ -8,14 +8,14 @@ import (
 	"testing"
 
 	"formera/internal/models"
-	"formera/internal/testutil"
+	"formera/internal/pkg"
 
 	"github.com/gin-gonic/gin"
 )
 
 func TestSubmissionHandler_Submit(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{
 		UserID: user.ID,
@@ -62,8 +62,8 @@ func TestSubmissionHandler_Submit(t *testing.T) {
 }
 
 func TestSubmissionHandler_Submit_RequiredFieldMissing(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{
 		UserID: user.ID,
@@ -96,8 +96,8 @@ func TestSubmissionHandler_Submit_RequiredFieldMissing(t *testing.T) {
 }
 
 func TestSubmissionHandler_Submit_FormNotPublished(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{
 		UserID: user.ID,
@@ -127,8 +127,8 @@ func TestSubmissionHandler_Submit_FormNotPublished(t *testing.T) {
 }
 
 func TestSubmissionHandler_Submit_MaxSubmissionsReached(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{
 		UserID: user.ID,
@@ -164,8 +164,8 @@ func TestSubmissionHandler_Submit_MaxSubmissionsReached(t *testing.T) {
 }
 
 func TestSubmissionHandler_Submit_SanitizesXSS(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{
 		UserID: user.ID,
@@ -210,8 +210,8 @@ func TestSubmissionHandler_Submit_SanitizesXSS(t *testing.T) {
 }
 
 func TestSubmissionHandler_List(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{UserID: user.ID, Title: "Test Form", Status: models.FormStatusPublished}
 	db.Create(form)
@@ -238,9 +238,9 @@ func TestSubmissionHandler_List(t *testing.T) {
 }
 
 func TestSubmissionHandler_List_WrongUser(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	owner := testutil.CreateTestUser(t, db, "owner@example.com", "password123", models.RoleUser)
-	otherUser := testutil.CreateTestUser(t, db, "other@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	owner := pkg.CreateTestUser(t, db, "owner@example.com", "password123", models.RoleUser)
+	otherUser := pkg.CreateTestUser(t, db, "other@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{UserID: owner.ID, Title: "Test Form", Status: models.FormStatusPublished}
 	db.Create(form)
@@ -263,8 +263,8 @@ func TestSubmissionHandler_List_WrongUser(t *testing.T) {
 }
 
 func TestSubmissionHandler_Delete(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{UserID: user.ID, Title: "Test Form", Status: models.FormStatusPublished}
 	db.Create(form)
@@ -297,8 +297,8 @@ func TestSubmissionHandler_Delete(t *testing.T) {
 }
 
 func TestSubmissionHandler_Stats(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{
 		UserID: user.ID,
@@ -338,5 +338,57 @@ func TestSubmissionHandler_Stats(t *testing.T) {
 
 	if response["total_submissions"].(float64) != 3 {
 		t.Errorf("expected 3 total submissions, got %v", response["total_submissions"])
+	}
+}
+
+func TestSubmissionHandler_Stats_ConversionRate(t *testing.T) {
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+
+	form := &models.Form{
+		UserID:    user.ID,
+		Title:     "Test Form",
+		Status:    models.FormStatusPublished,
+		ViewCount: 100, // 100 views
+	}
+	db.Create(form)
+
+	// Create 10 submissions (10% conversion rate)
+	for i := 0; i < 10; i++ {
+		db.Create(&models.Submission{FormID: form.ID, Data: map[string]interface{}{}})
+	}
+
+	handler := NewSubmissionHandler()
+	router := gin.New()
+	router.GET("/forms/:id/stats", func(c *gin.Context) {
+		c.Set("user_id", user.ID)
+		handler.Stats(c)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/forms/"+form.ID+"/stats", nil)
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	var response map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if response["total_submissions"].(float64) != 10 {
+		t.Errorf("expected 10 total submissions, got %v", response["total_submissions"])
+	}
+
+	if response["total_views"].(float64) != 100 {
+		t.Errorf("expected 100 total views, got %v", response["total_views"])
+	}
+
+	conversionRate := response["conversion_rate"].(float64)
+	if conversionRate != 10.0 {
+		t.Errorf("expected 10%% conversion rate, got %v%%", conversionRate)
 	}
 }
