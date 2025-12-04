@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"formera/internal/database"
+	"formera/internal/services"
 	"formera/internal/storage"
 
 	"github.com/gin-gonic/gin"
@@ -14,8 +15,10 @@ import (
 
 // UploadHandler handles file upload requests
 type UploadHandler struct {
-	storage     storage.Storage
-	rateLimiter *rateLimiter
+	storage           storage.Storage
+	rateLimiter       *rateLimiter
+	shareTokenService *services.ShareTokenService
+	apiURL            string
 }
 
 // rateLimiter implements a simple token bucket rate limiter per user
@@ -63,11 +66,13 @@ func (r *rateLimiter) allow(userID uint) bool {
 }
 
 // NewUploadHandler creates a new upload handler
-func NewUploadHandler(store storage.Storage) *UploadHandler {
+func NewUploadHandler(store storage.Storage, jwtSecret string, apiURL string) *UploadHandler {
 	return &UploadHandler{
 		storage: store,
 		// Rate limit: 20 uploads per 5 minutes per user
-		rateLimiter: newRateLimiter(20, 5*time.Minute),
+		rateLimiter:       newRateLimiter(20, 5*time.Minute),
+		shareTokenService: services.NewShareTokenService(jwtSecret),
+		apiURL:            apiURL,
 	}
 }
 
@@ -212,25 +217,18 @@ func (h *UploadHandler) UploadFile(c *gin.Context) {
 		contentType = detectContentType(header.Filename)
 	}
 
-	// Validate file upload
-	if err := storage.ValidateFileUpload(contentType, header.Size); err != nil {
-		switch err {
-		case storage.ErrInvalidFileType:
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid file type",
-			})
-		case storage.ErrFileTooLarge:
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": fmt.Sprintf("File too large. Maximum size: %d MB", storage.MaxFileSize/(1024*1024)),
-			})
-		default:
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		}
+	// Validate file size only - file type validation is done on the frontend
+	// based on form field settings configured by the form creator
+	if err := storage.ValidateFileSize(header.Size); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Sprintf("File too large. Maximum size: %d MB", storage.MaxFileSize/(1024*1024)),
+		})
 		return
 	}
 
-	// Upload to storage
-	result, err := h.storage.Upload(header.Filename, contentType, header.Size, file)
+	// Upload to storage - always use files/ directory for form submissions
+	// This ensures all submission files are protected and require share tokens
+	result, err := h.storage.UploadToFiles(header.Filename, contentType, header.Size, file)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Upload failed"})
 		return
@@ -252,17 +250,19 @@ func (h *UploadHandler) UploadFile(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// GetFile godoc
-// @Summary      Get file
-// @Description  Serve a file by path (streams from storage)
+// GetFilePublic godoc
+// @Summary      Get file (public for images, protected for files)
+// @Description  Serve image files publicly, but require token for submission files
 // @Tags         Files
 // @Produce      octet-stream
 // @Param        path path string true "File path"
+// @Param        token query string false "Share token (required for files/*, optional for images/*)"
 // @Success      200 {file} file "File content"
 // @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse "Token required for files/*"
 // @Failure      404 {object} ErrorResponse
-// @Router       /files/{path} [get]
-func (h *UploadHandler) GetFile(c *gin.Context) {
+// @Router       /uploads/{path} [get]
+func (h *UploadHandler) GetFilePublic(c *gin.Context) {
 	// Get the file path from URL parameter (e.g., "images/2025/12/abc123.png")
 	filePath := c.Param("path")
 	if filePath == "" {
@@ -282,6 +282,29 @@ func (h *UploadHandler) GetFile(c *gin.Context) {
 		return
 	}
 
+	// Check if this is a protected path (files/* requires token, images/* is public)
+	isProtectedPath := len(filePath) >= 5 && filePath[:5] == "files"
+	if isProtectedPath {
+		// Validate share token for files/*
+		token := c.Query("token")
+		if token == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Share token required for file access"})
+			return
+		}
+
+		if err := h.shareTokenService.ValidateShareToken(filePath, token); err != nil {
+			switch err {
+			case services.ErrTokenExpired:
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Share token has expired"})
+			case services.ErrTokenInvalid, services.ErrTokenMismatch:
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid share token"})
+			default:
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Token validation failed"})
+			}
+			return
+		}
+	}
+
 	// Get file content for streaming
 	fileContent, err := h.storage.GetFileByPath(filePath)
 	if err != nil {
@@ -294,11 +317,153 @@ func (h *UploadHandler) GetFile(c *gin.Context) {
 	}
 	defer fileContent.Reader.Close()
 
-	// Set headers for caching (1 year for immutable content-addressed files)
-	c.Header("Cache-Control", "public, max-age=31536000, immutable")
+	// Set headers for caching
+	if isProtectedPath {
+		c.Header("Cache-Control", "private, max-age=3600")
+	} else {
+		c.Header("Cache-Control", "public, max-age=31536000, immutable")
+	}
 
 	// Use Gin's DataFromReader for efficient streaming
 	c.DataFromReader(http.StatusOK, fileContent.Size, fileContent.ContentType, fileContent.Reader, nil)
+}
+
+// GetFileProtected godoc
+// @Summary      Get file (protected)
+// @Description  Serve a file by path with share token authentication
+// @Tags         Files
+// @Produce      octet-stream
+// @Param        path path string true "File path"
+// @Param        token query string true "Share token for authentication"
+// @Success      200 {file} file "File content"
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse "Invalid or expired token"
+// @Failure      404 {object} ErrorResponse
+// @Router       /files/{path} [get]
+func (h *UploadHandler) GetFileProtected(c *gin.Context) {
+	// Get the file path from URL parameter (e.g., "images/2025/12/abc123.png")
+	filePath := c.Param("path")
+	if filePath == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "File path required"})
+		return
+	}
+
+	// Remove leading slash if present
+	if len(filePath) > 0 && filePath[0] == '/' {
+		filePath = filePath[1:]
+	}
+
+	// Security: Sanitize path to prevent path traversal attacks
+	filePath = storage.SanitizePath(filePath)
+	if filePath == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file path"})
+		return
+	}
+
+	// Validate share token
+	token := c.Query("token")
+	if token == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Share token required"})
+		return
+	}
+
+	if err := h.shareTokenService.ValidateShareToken(filePath, token); err != nil {
+		switch err {
+		case services.ErrTokenExpired:
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Share token has expired"})
+		case services.ErrTokenInvalid, services.ErrTokenMismatch:
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid share token"})
+		default:
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token validation failed"})
+		}
+		return
+	}
+
+	// Get file content for streaming
+	fileContent, err := h.storage.GetFileByPath(filePath)
+	if err != nil {
+		if err == storage.ErrFileNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get file"})
+		return
+	}
+	defer fileContent.Reader.Close()
+
+	// Set headers for caching (1 hour for token-protected files)
+	c.Header("Cache-Control", "private, max-age=3600")
+
+	// Use Gin's DataFromReader for efficient streaming
+	c.DataFromReader(http.StatusOK, fileContent.Size, fileContent.ContentType, fileContent.Reader, nil)
+}
+
+// GenerateShareURLRequest represents a request to generate a share URL
+type GenerateShareURLRequest struct {
+	Path            string `json:"path" binding:"required"`
+	DurationMinutes int    `json:"duration_minutes"` // Optional, defaults to 60
+}
+
+// GenerateShareURLResponse represents the response with the share URL
+type GenerateShareURLResponse struct {
+	URL       string    `json:"url"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
+// GenerateShareURL godoc
+// @Summary      Generate share URL
+// @Description  Generate a time-limited share URL for a file
+// @Tags         Files
+// @Accept       json
+// @Produce      json
+// @Param        request body GenerateShareURLRequest true "Share URL request"
+// @Success      200 {object} GenerateShareURLResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /files/share [post]
+func (h *UploadHandler) GenerateShareURL(c *gin.Context) {
+	// Only authenticated users can generate share URLs
+	userID := c.GetString("user_id")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	var req GenerateShareURLRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	// Sanitize path
+	filePath := storage.SanitizePath(req.Path)
+	if filePath == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file path"})
+		return
+	}
+
+	// Set duration (default 60 minutes, max 24 hours)
+	duration := time.Duration(req.DurationMinutes) * time.Minute
+	if duration <= 0 {
+		duration = 60 * time.Minute
+	}
+	if duration > 24*time.Hour {
+		duration = 24 * time.Hour
+	}
+
+	// Generate token
+	token := h.shareTokenService.GenerateShareToken(filePath, duration)
+
+	// Build full URL
+	shareURL := fmt.Sprintf("%s/api/files/%s?token=%s", h.apiURL, filePath, token)
+
+	expiresAt := time.Now().Add(duration)
+
+	c.JSON(http.StatusOK, GenerateShareURLResponse{
+		URL:       shareURL,
+		ExpiresAt: expiresAt,
+	})
 }
 
 // DeleteFile godoc

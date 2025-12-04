@@ -104,6 +104,70 @@ func (s *LocalStorage) Upload(filename string, contentType string, size int64, r
 	}, nil
 }
 
+// UploadToFiles stores a file always in the files/ directory (for form submissions)
+func (s *LocalStorage) UploadToFiles(filename string, contentType string, size int64, reader io.Reader) (*UploadResult, error) {
+	// Generate short unique prefix for collision avoidance
+	prefix, err := generateShortPrefix()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate prefix: %w", err)
+	}
+
+	// Sanitize filename - keep original name but make it safe
+	sanitizedName := SanitizeFilename(filename)
+	if sanitizedName == "" {
+		// Fallback if filename is empty after sanitization
+		ext := GetExtensionFromMimeType(contentType)
+		sanitizedName = "file" + ext
+	}
+
+	// Always use "files" subdirectory for submission uploads
+	subdir := "files"
+
+	// Create date-based subdirectory for better organization
+	dateDir := time.Now().Format("2006/01")
+	fullDir := filepath.Join(s.basePath, subdir, dateDir)
+	if err := os.MkdirAll(fullDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create date directory: %w", err)
+	}
+
+	// Full file path - prefix + original filename for uniqueness while keeping recognizable name
+	storedFilename := prefix + "_" + sanitizedName
+	fullPath := filepath.Join(fullDir, storedFilename)
+
+	// Create the file
+	file, err := os.Create(fullPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create file: %w", err)
+	}
+	defer file.Close()
+
+	// Copy content with size limit
+	written, err := io.Copy(file, io.LimitReader(reader, size+1))
+	if err != nil {
+		os.Remove(fullPath) // Cleanup on error
+		return nil, fmt.Errorf("failed to write file: %w", err)
+	}
+
+	// Verify size matches
+	if written > size {
+		os.Remove(fullPath) // Cleanup on error
+		return nil, ErrFileTooLarge
+	}
+
+	// Build the relative path for URL
+	relativePath := filepath.Join(subdir, dateDir, storedFilename)
+	url := fmt.Sprintf("%s/%s", s.baseURL, relativePath)
+
+	return &UploadResult{
+		ID:       prefix,
+		Path:     relativePath, // Store relative path for database
+		URL:      url,          // Full URL for immediate use
+		Filename: sanitizedName,
+		Size:     written,
+		MimeType: contentType,
+	}, nil
+}
+
 // GetURLByPath returns the URL for a file given its relative path
 func (s *LocalStorage) GetURLByPath(path string) (string, error) {
 	// Check if the file exists
@@ -224,6 +288,15 @@ func (s *LocalStorage) Type() StorageType {
 // generateFileID creates a random file ID
 func generateFileID() (string, error) {
 	bytes := make([]byte, 16)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
+// generateShortPrefix creates a short random prefix (8 chars) for filename uniqueness
+func generateShortPrefix() (string, error) {
+	bytes := make([]byte, 4)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
 	}

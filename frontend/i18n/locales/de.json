@@ -532,8 +532,10 @@
 		"selectFiles": "Dateien auswählen",
 		"uploadFailed": "Upload fehlgeschlagen",
 		"fileTooLarge": "Datei \"{name}\" ist zu groß. Maximum: {max} MB",
+		"invalidType": "Datei \"{name}\" hat einen ungültigen Dateityp",
 		"remove": "Entfernen",
-		"maxSize": "Max. {size} MB"
+		"maxSize": "Max. {size} MB",
+		"uploadOnSubmit": "Wird beim Absenden hochgeladen"
 	},
 	"fields": {
 		"text": {

@@ -1,12 +1,14 @@
 const getServerFileUrl = (pathOrUrl: string, apiUrl: string): string => {
 	if (!pathOrUrl) return "";
 
-	if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://") || pathOrUrl.startsWith("/")) {
+	// Already a full URL or data URL
+	if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://") || pathOrUrl.startsWith("data:")) {
 		return pathOrUrl;
 	}
 
+	// Use /uploads/ endpoint for public files (images/, logos, favicons)
 	const cleanPath = pathOrUrl.startsWith("/") ? pathOrUrl.slice(1) : pathOrUrl;
-	return `${apiUrl}/files/${cleanPath}`;
+	return `${apiUrl}/uploads/${cleanPath}`;
 };
 
 export default defineNuxtPlugin(async () => {

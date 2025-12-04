@@ -108,24 +108,19 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
-	// Serve uploaded files - works for both local and S3 storage
-	// For local storage: serves files directly from disk
-	// For S3 storage: redirects to presigned URLs
-	if cfg.Storage.GetStorageType() == "local" {
-		r.Static("/uploads", cfg.Storage.LocalPath)
-	} else {
-		// For S3, use the upload handler to generate presigned URLs
-		uploadHandlerForFiles := handlers.NewUploadHandler(store)
-		r.GET("/uploads/*path", uploadHandlerForFiles.GetFile)
-	}
-
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(cfg.JWTSecret)
 	formHandler := handlers.NewFormHandler()
 	submissionHandler := handlers.NewSubmissionHandler()
 	setupHandler := handlers.NewSetupHandler(cfg.JWTSecret)
-	uploadHandler := handlers.NewUploadHandler(store)
+	uploadHandler := handlers.NewUploadHandler(store, cfg.JWTSecret, cfg.ApiURL)
 	userHandler := handlers.NewUserHandler()
+
+	// Serve uploaded files - all files require handler (no direct static serving)
+	// This ensures consistent behavior between local and S3 storage
+	// Public access via /uploads/* for form backgrounds, logos, etc.
+	// Protected access via /api/files/*?token=... for share links
+	r.GET("/uploads/*path", uploadHandler.GetFilePublic)
 
 	// Public routes with global rate limit (100 req/min per IP)
 	api := r.Group("/api")
@@ -149,8 +144,8 @@ func main() {
 		// Public file upload (for form submissions with file fields)
 		api.POST("/public/upload", uploadHandler.UploadFile)
 
-		// File serving endpoint (redirects to S3 presigned URL or local file)
-		api.GET("/files/*path", uploadHandler.GetFile)
+		// File serving endpoint with share token protection
+		api.GET("/files/*path", uploadHandler.GetFileProtected)
 	}
 
 	// Protected routes
@@ -182,6 +177,9 @@ func main() {
 		protected.POST("/uploads/image", uploadHandler.UploadImage)
 		protected.POST("/uploads/file", uploadHandler.UploadFile)
 		protected.DELETE("/uploads/:id", uploadHandler.DeleteFile)
+
+		// File share URL generation (authenticated)
+		protected.POST("/files/share", uploadHandler.GenerateShareURL)
 	}
 
 	// Admin routes (requires admin role)

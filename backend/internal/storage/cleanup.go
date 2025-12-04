@@ -124,12 +124,60 @@ func (c *CleanupScheduler) RunCleanup() *CleanupResult {
 	start := time.Now()
 	result := &CleanupResult{}
 
-	// Get all file records
+	// First: Delete files that have been soft-deleted (marked for deletion)
+	c.cleanupSoftDeletedFiles(result)
+
+	// Second: Check for orphaned files (not referenced anywhere)
+	c.cleanupOrphanedFiles(result)
+
+	result.Duration = time.Since(start)
+	return result
+}
+
+// cleanupSoftDeletedFiles deletes files that were marked for deletion
+func (c *CleanupScheduler) cleanupSoftDeletedFiles(result *CleanupResult) {
+	// Files marked as deleted for at least 1 hour (grace period for any caching)
+	cutoffTime := time.Now().Add(-1 * time.Hour)
+
+	var deletedFiles []FileRecord
+	if err := c.db.Where("deleted_at IS NOT NULL AND deleted_at < ?", cutoffTime).Find(&deletedFiles).Error; err != nil {
+		result.Errors = append(result.Errors, "Failed to query soft-deleted files: "+err.Error())
+		return
+	}
+
+	for _, file := range deletedFiles {
+		if c.config.DryRun {
+			log.Printf("[DRY RUN] Would delete soft-deleted file: %s (%s, %d bytes)",
+				file.ID, file.Filename, file.Size)
+			result.DeletedFiles++
+			result.DeletedBytes += file.Size
+		} else {
+			// Delete from storage
+			if err := c.storage.Delete(file.ID); err != nil && err != ErrFileNotFound {
+				result.Errors = append(result.Errors, "Failed to delete file "+file.ID+": "+err.Error())
+				continue
+			}
+
+			// Hard delete record from database
+			if err := c.db.Unscoped().Delete(&file).Error; err != nil {
+				result.Errors = append(result.Errors, "Failed to delete record "+file.ID+": "+err.Error())
+				continue
+			}
+
+			log.Printf("Deleted soft-deleted file: %s (%s)", file.ID, file.Filename)
+			result.DeletedFiles++
+			result.DeletedBytes += file.Size
+		}
+	}
+}
+
+// cleanupOrphanedFiles deletes files that are no longer referenced anywhere
+func (c *CleanupScheduler) cleanupOrphanedFiles(result *CleanupResult) {
+	// Get all file records that are not soft-deleted
 	var files []FileRecord
-	if err := c.db.Find(&files).Error; err != nil {
+	if err := c.db.Where("deleted_at IS NULL").Find(&files).Error; err != nil {
 		result.Errors = append(result.Errors, "Failed to query file records: "+err.Error())
-		result.Duration = time.Since(start)
-		return result
+		return
 	}
 
 	result.ScannedFiles = len(files)
@@ -162,7 +210,7 @@ func (c *CleanupScheduler) RunCleanup() *CleanupResult {
 				}
 
 				// Delete record from database
-				if err := c.db.Delete(&file).Error; err != nil {
+				if err := c.db.Unscoped().Delete(&file).Error; err != nil {
 					result.Errors = append(result.Errors, "Failed to delete record "+file.ID+": "+err.Error())
 					continue
 				}
@@ -172,9 +220,6 @@ func (c *CleanupScheduler) RunCleanup() *CleanupResult {
 			}
 		}
 	}
-
-	result.Duration = time.Since(start)
-	return result
 }
 
 func (c *CleanupScheduler) logResult(result *CleanupResult) {
@@ -198,14 +243,27 @@ func (c *CleanupScheduler) logResult(result *CleanupResult) {
 
 // FileRecord represents a tracked file (mirrors the model)
 type FileRecord struct {
-	ID        string    `gorm:"primaryKey"`
-	UserID    string    `gorm:"index"`
+	ID        string     `gorm:"primaryKey"`
+	UserID    string     `gorm:"index"`
 	Filename  string
 	MimeType  string
 	Size      int64
 	Path      string // Relative path (e.g., "images/2025/12/abc123.png")
 	URL       string // Deprecated: kept for backward compatibility
 	CreatedAt time.Time
+	DeletedAt *time.Time `gorm:"index"` // Soft delete - when set, file is scheduled for deletion
+}
+
+// MarkFilesAsDeleted marks files by their paths as soft-deleted for later cleanup
+func MarkFilesAsDeleted(db *gorm.DB, paths []string) error {
+	if len(paths) == 0 {
+		return nil
+	}
+
+	now := time.Now()
+	return db.Model(&FileRecord{}).
+		Where("path IN ?", paths).
+		Update("deleted_at", &now).Error
 }
 
 // IsOrphaned checks if this file is referenced anywhere in the database

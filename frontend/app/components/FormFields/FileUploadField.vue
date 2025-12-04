@@ -1,4 +1,15 @@
 <script lang="ts" setup>
+// Pending file = selected but not yet uploaded (stored client-side)
+interface PendingFile {
+	id: string;
+	file: File;
+	filename: string;
+	size: number;
+	mimeType: string;
+	previewUrl?: string;
+}
+
+// Uploaded file = already on server (from previous submission or after upload)
 interface UploadedFile {
 	id: string;
 	path: string;
@@ -35,11 +46,13 @@ const { t } = useI18n();
 const config = useRuntimeConfig();
 const apiUrl = config.public.apiUrl as string;
 
+// Pending files (selected but not uploaded yet)
+const pendingFiles = ref<PendingFile[]>([]);
+// Already uploaded files (from modelValue - existing submissions)
 const uploadedFiles = ref<UploadedFile[]>([]);
-const isUploading = ref(false);
-const uploadError = ref<string | null>(null);
+const validationError = ref<string | null>(null);
 
-// Sync uploaded files with modelValue on mount
+// Sync uploaded files with modelValue on mount (for existing data)
 onMounted(() => {
 	if (props.modelValue.length > 0) {
 		uploadedFiles.value = props.modelValue.map((path, index) => ({
@@ -53,75 +66,138 @@ onMounted(() => {
 	}
 });
 
-const handleChange = async (event: Event) => {
+// Clean up preview URLs when component unmounts
+onUnmounted(() => {
+	pendingFiles.value.forEach((f) => {
+		if (f.previewUrl) {
+			URL.revokeObjectURL(f.previewUrl);
+		}
+	});
+});
+
+// Handle file selection - validate and store client-side only
+const handleChange = (event: Event) => {
 	const input = event.target as HTMLInputElement;
 	const files = input.files;
 	if (!files || files.length === 0) return;
 
-	uploadError.value = null;
-	isUploading.value = true;
-
-	const filesToUpload = Array.from(files);
+	validationError.value = null;
+	const filesToAdd = Array.from(files);
 
 	// Validate file sizes
-	for (const file of filesToUpload) {
+	for (const file of filesToAdd) {
 		if (file.size > props.maxFileSize * 1024 * 1024) {
-			uploadError.value = t("fileUpload.fileTooLarge", { name: file.name, max: props.maxFileSize });
-			isUploading.value = false;
+			validationError.value = t("fileUpload.fileTooLarge", { name: file.name, max: props.maxFileSize });
 			input.value = "";
 			return;
 		}
 	}
 
-	try {
-		const newFiles: UploadedFile[] = [];
-
-		for (const file of filesToUpload) {
-			const formData = new FormData();
-			formData.append("file", file);
-
-			const response = await fetch(`${apiUrl}/public/upload`, {
-				method: "POST",
-				body: formData,
+	// Validate file types if specified
+	if (props.allowedTypes.length > 0) {
+		for (const file of filesToAdd) {
+			const isAllowed = props.allowedTypes.some((type) => {
+				if (type.startsWith(".")) {
+					return file.name.toLowerCase().endsWith(type.toLowerCase());
+				}
+				if (type.endsWith("/*")) {
+					return file.type.startsWith(type.slice(0, -1));
+				}
+				return file.type === type;
 			});
-
-			if (!response.ok) {
-				const error = await response.json().catch(() => ({ error: t("fileUpload.uploadFailed") }));
-				throw new Error(error.error || t("fileUpload.uploadFailed"));
+			if (!isAllowed) {
+				validationError.value = t("fileUpload.invalidType", { name: file.name });
+				input.value = "";
+				return;
 			}
-
-			const result = await response.json();
-
-			newFiles.push({
-				id: result.id,
-				path: result.path,
-				url: getFileUrl(result.path),
-				filename: result.filename || file.name,
-				size: result.size || file.size,
-				mimeType: result.mimeType || file.type,
-			});
 		}
-
-		// Add new files to existing ones (or replace if not multiple)
-		if (props.multiple) {
-			uploadedFiles.value = [...uploadedFiles.value, ...newFiles];
-		} else {
-			uploadedFiles.value = newFiles;
-		}
-
-		// Emit the paths as the model value
-		const paths = uploadedFiles.value.map((f) => f.path);
-		emit("update:modelValue", paths);
-		emit("change");
-	} catch (err) {
-		uploadError.value = err instanceof Error ? err.message : t("fileUpload.uploadFailed");
-	} finally {
-		isUploading.value = false;
-		input.value = "";
 	}
+
+	// Create pending file entries
+	const newPending: PendingFile[] = filesToAdd.map((file) => ({
+		id: `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+		file,
+		filename: file.name,
+		size: file.size,
+		mimeType: file.type,
+		previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+	}));
+
+	// Add new files (or replace if not multiple)
+	if (props.multiple) {
+		pendingFiles.value = [...pendingFiles.value, ...newPending];
+	} else {
+		// Clean up old preview URLs
+		pendingFiles.value.forEach((f) => {
+			if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
+		});
+		pendingFiles.value = newPending;
+		uploadedFiles.value = []; // Clear existing uploaded files in single mode
+	}
+
+	emit("change");
+	input.value = "";
 };
 
-const removeFile = (index: number) => {
+// Upload all pending files - called by parent form on submit
+const uploadPendingFiles = async (): Promise<string[]> => {
+	const uploadedPaths: string[] = [];
+
+	for (const pending of pendingFiles.value) {
+		const formData = new FormData();
+		formData.append("file", pending.file);
+
+		const response = await fetch(`${apiUrl}/api/public/upload`, {
+			method: "POST",
+			body: formData,
+		});
+
+		if (!response.ok) {
+			const error = await response.json().catch(() => ({ error: t("fileUpload.uploadFailed") }));
+			throw new Error(error.error || t("fileUpload.uploadFailed"));
+		}
+
+		const result = await response.json();
+		uploadedPaths.push(result.path);
+	}
+
+	// Add existing uploaded file paths
+	uploadedPaths.push(...uploadedFiles.value.map((f) => f.path));
+
+	return uploadedPaths;
+};
+
+// Check if there are files ready (pending or uploaded)
+const hasFiles = computed(() => pendingFiles.value.length > 0 || uploadedFiles.value.length > 0);
+
+// Check if valid for submission
+const isValid = computed(() => {
+	if (props.required) {
+		return hasFiles.value;
+	}
+	return true;
+});
+
+// Expose methods and state for parent form
+defineExpose({
+	uploadPendingFiles,
+	hasFiles,
+	isValid,
+	hasPendingFiles: computed(() => pendingFiles.value.length > 0),
+});
+
+// Remove a pending file
+const removePendingFile = (index: number) => {
+	const file = pendingFiles.value[index];
+	if (file?.previewUrl) {
+		URL.revokeObjectURL(file.previewUrl);
+	}
+	pendingFiles.value.splice(index, 1);
+	emit("change");
+};
+
+// Remove an already uploaded file
+const removeUploadedFile = (index: number) => {
 	uploadedFiles.value.splice(index, 1);
 	const paths = uploadedFiles.value.map((f) => f.path);
 	emit("update:modelValue", paths);
@@ -146,30 +222,43 @@ const acceptTypes = computed(() => {
 			:id="`file-${fieldId}`"
 			type="file"
 			class="file-input"
-			:required="required && uploadedFiles.length === 0"
+			:required="required && !hasFiles"
 			:multiple="multiple"
 			:accept="acceptTypes"
-			:disabled="isUploading"
 			@change="handleChange"
 		/>
-		<label :for="`file-${fieldId}`" class="file-label" :class="{ disabled: isUploading }">
-			<template v-if="isUploading">
-				<UISysIcon icon="fa-solid fa-spinner fa-spin" />
-				<span>{{ t("fileUpload.uploading") }}</span>
-			</template>
-			<template v-else>
-				<UISysIcon icon="fa-solid fa-upload" />
-				<span>{{ multiple ? t("fileUpload.selectFiles") : t("fileUpload.selectFile") }}</span>
-			</template>
+		<label :for="`file-${fieldId}`" class="file-label">
+			<UISysIcon icon="fa-solid fa-upload" />
+			<span>{{ multiple ? t("fileUpload.selectFiles") : t("fileUpload.selectFile") }}</span>
 		</label>
 
-		<!-- Upload Error -->
-		<div v-if="uploadError" class="upload-error">
+		<!-- Validation Error -->
+		<div v-if="validationError" class="upload-error">
 			<UISysIcon icon="fa-solid fa-circle-exclamation" />
-			{{ uploadError }}
+			{{ validationError }}
 		</div>
 
-		<!-- Uploaded Files List -->
+		<!-- Pending Files List (not yet uploaded) -->
+		<div v-if="pendingFiles.length > 0" class="file-list">
+			<div v-for="(file, index) in pendingFiles" :key="file.id" class="file-item file-item-pending">
+				<div class="file-preview">
+					<img v-if="file.previewUrl" :src="file.previewUrl" :alt="file.filename" class="preview-image" />
+					<UISysIcon v-else icon="fa-solid fa-file" class="file-icon" />
+				</div>
+				<div class="file-info">
+					<span class="file-name">{{ file.filename }}</span>
+					<span class="file-size">{{ formatFileSize(file.size) }}</span>
+				</div>
+				<span class="file-info-icon" :title="t('fileUpload.uploadOnSubmit')">
+					<UISysIcon icon="fa-solid fa-circle-info" />
+				</span>
+				<button type="button" class="remove-btn" :title="t('fileUpload.remove')" @click="removePendingFile(index)">
+					<UISysIcon icon="fa-solid fa-xmark" />
+				</button>
+			</div>
+		</div>
+
+		<!-- Already Uploaded Files List -->
 		<div v-if="uploadedFiles.length > 0" class="file-list">
 			<div v-for="(file, index) in uploadedFiles" :key="file.id" class="file-item">
 				<div class="file-info">
@@ -177,7 +266,7 @@ const acceptTypes = computed(() => {
 					<span class="file-name">{{ file.filename }}</span>
 					<span v-if="file.size > 0" class="file-size">{{ formatFileSize(file.size) }}</span>
 				</div>
-				<button type="button" class="remove-btn" :title="t('fileUpload.remove')" @click="removeFile(index)">
+				<button type="button" class="remove-btn" :title="t('fileUpload.remove')" @click="removeUploadedFile(index)">
 					<UISysIcon icon="fa-solid fa-xmark" />
 				</button>
 			</div>
@@ -224,14 +313,9 @@ const acceptTypes = computed(() => {
 	transition: all 0.2s;
 }
 
-.file-label:hover:not(.disabled) {
+.file-label:hover {
 	color: var(--primary);
 	border-color: var(--primary);
-}
-
-.file-label.disabled {
-	cursor: not-allowed;
-	opacity: 0.7;
 }
 
 .upload-error {
@@ -305,6 +389,38 @@ const acceptTypes = computed(() => {
 .remove-btn:hover {
 	color: var(--error);
 	background: rgba(239, 68, 68, 0.1);
+}
+
+.file-item-pending {
+	border: 1px dashed var(--border);
+	background: var(--surface);
+}
+
+.file-preview {
+	flex-shrink: 0;
+	width: 2.5rem;
+	height: 2.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--background);
+	border-radius: var(--radius);
+	overflow: hidden;
+}
+
+.preview-image {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.file-info-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-secondary);
+	cursor: help;
+	font-size: 0.875rem;
 }
 
 .file-hint {

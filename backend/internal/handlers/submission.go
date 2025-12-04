@@ -3,13 +3,16 @@ package handlers
 import (
 	"encoding/csv"
 	"fmt"
+	"log"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
 
 	"formera/internal/database"
 	"formera/internal/models"
 	"formera/internal/pkg"
+	"formera/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
@@ -248,12 +251,75 @@ func (h *SubmissionHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	if result := database.DB.Where("id = ? AND form_id = ?", submissionID, formID).Delete(&models.Submission{}); result.Error != nil {
+	// First, get the submission to extract file paths
+	var submission models.Submission
+	if result := database.DB.Where("id = ? AND form_id = ?", submissionID, formID).First(&submission); result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Submission not found"})
+		return
+	}
+
+	// Extract file paths from submission data
+	filePaths := extractFilePathsFromSubmission(submission.Data, form.Fields)
+
+	// Mark files as deleted for cleanup scheduler
+	if len(filePaths) > 0 {
+		if err := storage.MarkFilesAsDeleted(database.DB, filePaths); err != nil {
+			log.Printf("Warning: Failed to mark files as deleted for submission %s: %v", submissionID, err)
+			// Continue with deletion anyway - files will be cleaned up as orphans later
+		} else {
+			log.Printf("Marked %d file(s) for deletion from submission %s", len(filePaths), submissionID)
+		}
+	}
+
+	// Delete the submission
+	if result := database.DB.Delete(&submission); result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete submission"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Submission deleted successfully"})
+}
+
+// extractFilePathsFromSubmission extracts all file paths from submission data
+func extractFilePathsFromSubmission(data models.SubmissionData, fields []models.FormField) []string {
+	var paths []string
+
+	// Get all file field IDs
+	fileFieldIDs := make(map[string]bool)
+	for _, field := range fields {
+		if field.Type == "file" {
+			fileFieldIDs[field.ID] = true
+		}
+	}
+
+	// Extract paths from file fields
+	for fieldID, value := range data {
+		if !fileFieldIDs[fieldID] {
+			continue
+		}
+
+		switch v := value.(type) {
+		case string:
+			// Single file path
+			if isFilePath(v) {
+				paths = append(paths, v)
+			}
+		case []interface{}:
+			// Multiple file paths
+			for _, item := range v {
+				if str, ok := item.(string); ok && isFilePath(str) {
+					paths = append(paths, str)
+				}
+			}
+		}
+	}
+
+	return paths
+}
+
+// isFilePath checks if a string looks like a file path
+func isFilePath(s string) bool {
+	return strings.HasPrefix(s, "files/") || strings.HasPrefix(s, "images/")
 }
 
 // Stats godoc

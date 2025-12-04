@@ -42,7 +42,7 @@ const isUploadingFavicon = ref(false);
 const isUploadingLoginBackground = ref(false);
 
 // Language and Theme state
-const selectedLanguage = ref("en");
+const selectedLanguage = ref<"en" | "de">("en");
 const selectedTheme = ref<"light" | "dark" | "system">("system");
 
 // Users state
@@ -379,7 +379,7 @@ onMounted(() => {
 					<div class="card-body">
 						<div class="form-group">
 							<label class="label" for="appName">{{ $t("settings.general.appName") }}</label>
-							<input id="appName" v-model="settings.app_name" class="input" type="text" />
+							<input id="appName" v-model="settings!.app_name" class="input" type="text" />
 							<p class="form-hint">{{ $t("settings.general.appNameHint") }}</p>
 						</div>
 					</div>
@@ -422,7 +422,7 @@ onMounted(() => {
 					<div class="card-body">
 						<div class="form-group">
 							<label class="toggle-label">
-								<input v-model="settings.allow_registration" type="checkbox" class="toggle-input" />
+								<input v-model="settings!.allow_registration" type="checkbox" class="toggle-input" />
 								<span class="toggle-switch" />
 								<span class="toggle-text">{{ $t("settings.general.allowRegistration") }}</span>
 							</label>

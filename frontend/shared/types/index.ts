@@ -255,7 +255,7 @@ export interface Settings {
 	logo_show_text: boolean;
 	favicon_url: string;
 	login_background_url: string;
-	language: string;
+	language: "en" | "de";
 	theme: "light" | "dark" | "system";
 	created_at: string;
 	updated_at: string;

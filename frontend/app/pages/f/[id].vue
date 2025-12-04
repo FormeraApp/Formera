@@ -218,6 +218,9 @@ useHead(() => ({
 
 const formFields = computed(() => form.value?.fields || []);
 
+// Template refs for file upload fields
+const fileUploadRefs = ref<Record<string, { uploadPendingFiles: () => Promise<string[]>; hasPendingFiles: boolean; hasFiles: boolean } | null>>({});
+
 // Split fields into pages based on pagebreak fields
 const pages = computed(() => {
 	const result: FormField[][] = [[]];
@@ -243,6 +246,16 @@ const currentPageFields = computed(() => pages.value[currentPage.value] || []);
 
 // Validate a single field
 const validateSingleField = (field: FormField): string => {
+	// For file fields, check the component's hasFiles state instead of formData
+	// because files are stored client-side until form submission
+	if (field.type === "file") {
+		const uploadRef = fileUploadRefs.value[field.id];
+		if (field.required && !uploadRef?.hasFiles) {
+			return "Dieses Feld ist erforderlich";
+		}
+		return "";
+	}
+
 	const value = formData.value[field.id];
 	const result = validateField(value, field.type, field.required, field.validation);
 	return result.valid ? "" : result.message || "";
@@ -361,6 +374,16 @@ const handleSubmit = async () => {
 	error.value = null;
 
 	try {
+		// Upload pending files before submitting
+		const fileFields = formFields.value.filter((f) => f.type === "file");
+		for (const field of fileFields) {
+			const uploadRef = fileUploadRefs.value[field.id];
+			if (uploadRef?.hasPendingFiles) {
+				const uploadedPaths = await uploadRef.uploadPendingFiles();
+				formData.value[field.id] = uploadedPaths;
+			}
+		}
+
 		// Include tracking parameters if present
 		const metadata = Object.keys(trackingParams.value).length > 0 ? trackingParams.value : undefined;
 		const response = await submissionsApi.submit(form.value.id, formData.value, metadata);
@@ -705,6 +728,7 @@ onUnmounted(() => {
 						<!-- File Upload -->
 						<FormFieldsFileUploadField
 							v-else-if="field.type === 'file'"
+							:ref="(el: any) => { if (el) fileUploadRefs[field.id] = el }"
 							v-model="formData[field.id] as string[]"
 							:field-id="field.id"
 							:required="field.required"

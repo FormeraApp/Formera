@@ -133,6 +133,63 @@ func (s *S3Storage) Upload(filename string, contentType string, size int64, read
 	}, nil
 }
 
+// UploadToFiles stores a file always in the files/ directory (for form submissions)
+func (s *S3Storage) UploadToFiles(filename string, contentType string, size int64, reader io.Reader) (*UploadResult, error) {
+	ctx := context.TODO()
+
+	// Generate short unique prefix for collision avoidance
+	prefix, err := s.generateShortPrefix()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate prefix: %w", err)
+	}
+
+	// Sanitize filename - keep original name but make it safe
+	sanitizedName := SanitizeFilename(filename)
+	if sanitizedName == "" {
+		// Fallback if filename is empty after sanitization
+		ext := GetExtensionFromMimeType(contentType)
+		sanitizedName = "file" + ext
+	}
+
+	// Always use "files" subdirectory for submission uploads
+	subdir := "files"
+
+	// Create the relative path (without prefix - that's S3-specific)
+	dateDir := time.Now().Format("2006/01")
+	storedFilename := prefix + "_" + sanitizedName
+	relativePath := fmt.Sprintf("%s/%s/%s", subdir, dateDir, storedFilename)
+
+	// Create the full S3 key (with prefix)
+	key := s.prefix + relativePath
+
+	// Upload to S3
+	_, err = s.client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:        aws.String(s.bucket),
+		Key:           aws.String(key),
+		Body:          reader,
+		ContentType:   aws.String(contentType),
+		ContentLength: aws.Int64(size),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload to S3: %w", err)
+	}
+
+	// Generate presigned URL for immediate use
+	url, err := s.getPresignedURL(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
+
+	return &UploadResult{
+		ID:       prefix,
+		Path:     relativePath, // Store relative path for database
+		URL:      url,          // Presigned URL for immediate use
+		Filename: sanitizedName,
+		Size:     size,
+		MimeType: contentType,
+	}, nil
+}
+
 // GetURLByPath returns a presigned URL for a file given its relative path
 func (s *S3Storage) GetURLByPath(path string) (string, error) {
 	// Build the full S3 key by adding our prefix
@@ -264,6 +321,15 @@ func (s *S3Storage) getPresignedURL(key string) (string, error) {
 // generateFileID creates a random file ID
 func (s *S3Storage) generateFileID() (string, error) {
 	bytes := make([]byte, 16)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
+// generateShortPrefix creates a short random prefix (8 chars) for filename uniqueness
+func (s *S3Storage) generateShortPrefix() (string, error) {
+	bytes := make([]byte, 4)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
 	}
