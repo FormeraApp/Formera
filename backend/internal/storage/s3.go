@@ -140,6 +140,39 @@ func (s *S3Storage) GetURLByPath(path string) (string, error) {
 	return s.getPresignedURL(key)
 }
 
+// GetFileByPath retrieves a file's content from S3 for streaming/proxying
+func (s *S3Storage) GetFileByPath(path string) (*FileContent, error) {
+	ctx := context.TODO()
+
+	// Build the full S3 key by adding our prefix
+	key := s.prefix + path
+
+	// Get the object from S3
+	result, err := s.client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return nil, ErrFileNotFound
+	}
+
+	contentType := "application/octet-stream"
+	if result.ContentType != nil {
+		contentType = *result.ContentType
+	}
+
+	var size int64
+	if result.ContentLength != nil {
+		size = *result.ContentLength
+	}
+
+	return &FileContent{
+		Reader:      result.Body,
+		ContentType: contentType,
+		Size:        size,
+	}, nil
+}
+
 // GetURL returns a presigned URL for accessing a file
 func (s *S3Storage) GetURL(fileID string) (string, error) {
 	ctx := context.TODO()

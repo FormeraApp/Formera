@@ -49,6 +49,14 @@
 		"forms": "Forms",
 		"settings": "Settings"
 	},
+	"pagination": {
+		"showing": "Showing {start} to {end} of {total}",
+		"first": "First page",
+		"previous": "Previous page",
+		"next": "Next page",
+		"last": "Last page",
+		"perPage": "Per page:"
+	},
 	"settings": {
 		"title": "Settings",
 		"description": "Manage your application settings",

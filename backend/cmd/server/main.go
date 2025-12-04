@@ -1,7 +1,8 @@
 package main
 
 import (
-	"log"
+	"context"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -10,44 +11,90 @@ import (
 	"formera/internal/config"
 	"formera/internal/database"
 	"formera/internal/handlers"
+	"formera/internal/logger"
 	"formera/internal/middleware"
 	"formera/internal/storage"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+
+	// Swagger docs
+	_ "formera/docs"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// @title Formera API
+// @version 1.0
+// @description REST API for Formera - a self-hosted form builder application
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url https://github.com/your-repo/formera
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /api
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token
 
 func main() {
 	cfg := config.Load()
 
+	// Initialize logger
+	logger.Initialize(logger.Config{
+		Level:  cfg.LogLevel,
+		Pretty: cfg.LogPretty,
+	})
+
 	// Initialize database
 	if err := database.Initialize(cfg.DBPath); err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+		logger.Fatal().Err(err).Msg("Failed to initialize database")
 	}
 
 	// Initialize storage
 	store, err := initStorage(cfg)
 	if err != nil {
-		log.Fatalf("Failed to initialize storage: %v", err)
+		logger.Fatal().Err(err).Msg("Failed to initialize storage")
 	}
-	log.Printf("Storage initialized: %s", store.Type())
+	logger.Info().Str("type", string(store.Type())).Msg("Storage initialized")
 
 	// Start cleanup scheduler
 	cleanupScheduler := startCleanupScheduler(cfg, store)
 	defer cleanupScheduler.Stop()
 
-	// Handle graceful shutdown
-	go func() {
-		sigCh := make(chan os.Signal, 1)
-		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-		<-sigCh
-		log.Println("Shutting down...")
-		cleanupScheduler.Stop()
-		os.Exit(0)
-	}()
+	// Setup Gin router with custom middleware
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
 
-	// Setup Gin router
-	r := gin.Default()
+	// Configure trusted proxies for accurate client IP detection
+	// nil = trust all proxies (default), empty slice = trust no proxies
+	if cfg.TrustedProxies == nil {
+		r.SetTrustedProxies(nil) // Trust all (dev mode)
+	} else if len(cfg.TrustedProxies) == 0 {
+		r.SetTrustedProxies([]string{}) // Trust none
+	} else {
+		if err := r.SetTrustedProxies(cfg.TrustedProxies); err != nil {
+			logger.Fatal().Err(err).Msg("Invalid trusted proxies configuration")
+		}
+		logger.Info().Strs("proxies", cfg.TrustedProxies).Msg("Trusted proxies configured")
+	}
+
+	// Configure custom IP header if specified (e.g., CF-Connecting-IP for Cloudflare)
+	if cfg.RealIPHeader != "" {
+		r.RemoteIPHeaders = []string{cfg.RealIPHeader}
+		logger.Info().Str("header", cfg.RealIPHeader).Msg("Using custom IP header")
+	}
+
+	r.Use(logger.GinLogger())
+	r.Use(logger.GinRecovery())
+	r.Use(middleware.SecurityHeaders())
 
 	// CORS configuration
 	r.Use(cors.New(cors.Config{
@@ -57,9 +104,15 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
-	// Serve static files for local storage
+	// Serve uploaded files - works for both local and S3 storage
+	// For local storage: serves files directly from disk
+	// For S3 storage: redirects to presigned URLs
 	if cfg.Storage.GetStorageType() == "local" {
 		r.Static("/uploads", cfg.Storage.LocalPath)
+	} else {
+		// For S3, use the upload handler to generate presigned URLs
+		uploadHandlerForFiles := handlers.NewUploadHandler(store)
+		r.GET("/uploads/*path", uploadHandlerForFiles.GetFile)
 	}
 
 	// Initialize handlers
@@ -70,21 +123,24 @@ func main() {
 	uploadHandler := handlers.NewUploadHandler(store)
 	userHandler := handlers.NewUserHandler()
 
-	// Public routes
+	// Public routes with global rate limit (100 req/min per IP)
 	api := r.Group("/api")
+	api.Use(middleware.APIRateLimiter())
 	{
 		// Setup routes (public)
 		api.GET("/setup/status", setupHandler.GetStatus)
 		api.POST("/setup/complete", setupHandler.CompleteSetup)
 
-		// Auth routes
-		api.POST("/auth/register", authHandler.Register)
-		api.POST("/auth/login", authHandler.Login)
+		// Auth routes with stricter rate limit (10 req/min per IP)
+		api.POST("/auth/register", middleware.AuthRateLimiter(), authHandler.Register)
+		api.POST("/auth/login", middleware.AuthRateLimiter(), authHandler.Login)
 
 		// Public form access (supports both ID and slug)
 		api.GET("/public/forms/:id", formHandler.GetPublic)
 		api.POST("/public/forms/:id/verify-password", formHandler.VerifyPassword)
-		api.POST("/public/forms/:id/submit", submissionHandler.Submit)
+
+		// Form submission with moderate rate limit (30 req/min per IP)
+		api.POST("/public/forms/:id/submit", middleware.SubmissionRateLimiter(), submissionHandler.Submit)
 
 		// Public file upload (for form submissions with file fields)
 		api.POST("/public/upload", uploadHandler.UploadFile)
@@ -141,15 +197,65 @@ func main() {
 		admin.DELETE("/users/:id", userHandler.Delete)
 	}
 
-	// Health check
+	// Swagger documentation endpoint
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Health check endpoints
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
-	log.Printf("Server starting on port %s", cfg.Port)
-	if err := r.Run(":" + cfg.Port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	r.GET("/health/ready", func(c *gin.Context) {
+		// Check database connection
+		sqlDB, err := database.DB.DB()
+		if err != nil {
+			c.JSON(503, gin.H{"status": "error", "error": "database connection failed"})
+			return
+		}
+		if err := sqlDB.Ping(); err != nil {
+			c.JSON(503, gin.H{"status": "error", "error": "database ping failed"})
+			return
+		}
+		c.JSON(200, gin.H{"status": "ready", "database": "ok"})
+	})
+
+	// Create HTTP server
+	srv := &http.Server{
+		Addr:         ":" + cfg.Port,
+		Handler:      r,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
+
+	// Start server in goroutine
+	go func() {
+		logger.Info().Str("port", cfg.Port).Msg("Server starting")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatal().Err(err).Msg("Failed to start server")
+		}
+	}()
+
+	// Graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	logger.Info().Msg("Shutting down server...")
+
+	// Give outstanding requests 30 seconds to complete
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Stop cleanup scheduler
+	cleanupScheduler.Stop()
+
+	// Shutdown HTTP server
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Error().Err(err).Msg("Server forced to shutdown")
+	}
+
+	logger.Info().Msg("Server exited")
 }
 
 // initStorage initializes the appropriate storage backend based on configuration
@@ -194,23 +300,25 @@ func migrateLocalToS3(cfg *config.Config, s3Store *storage.S3Storage) {
 		return // No local files to migrate
 	}
 
-	log.Println("Checking for local files to migrate to S3...")
+	logger.Info().Msg("Checking for local files to migrate to S3...")
 
 	result, err := storage.MigrateLocalToS3(localPath, s3Store, cfg.Storage.DeleteAfterMigrate)
 	if err != nil {
-		log.Printf("Migration error: %v", err)
+		logger.Error().Err(err).Msg("Migration error")
 		return
 	}
 
 	if result.MigratedFiles > 0 {
-		log.Printf("Migration complete: %d files migrated (%.2f MB)",
-			result.MigratedFiles, float64(result.MigratedBytes)/(1024*1024))
+		logger.Info().
+			Int("files", result.MigratedFiles).
+			Float64("size_mb", float64(result.MigratedBytes)/(1024*1024)).
+			Msg("Migration complete")
 	}
 
 	if len(result.Errors) > 0 {
-		log.Printf("Migration had %d errors:", len(result.Errors))
+		logger.Warn().Int("count", len(result.Errors)).Msg("Migration had errors")
 		for _, e := range result.Errors {
-			log.Printf("  - %s", e)
+			logger.Warn().Str("error", e).Msg("Migration error detail")
 		}
 	}
 }

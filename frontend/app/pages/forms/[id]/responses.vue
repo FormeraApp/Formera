@@ -11,6 +11,9 @@ const submissions = ref<Submission[]>([]);
 const stats = ref<FormStats | null>(null);
 const isLoading = ref(true);
 
+// Pagination - Default 20 items per page
+const pagination = usePagination(5);
+
 // Tab state: 'summary' | 'question' | 'individual'
 const activeTab = ref<"summary" | "question" | "individual">("summary");
 
@@ -21,12 +24,20 @@ const selectedFieldId = ref<string | null>(null);
 const currentSubmissionIndex = ref(0);
 const sortOrder = ref<"newest" | "oldest">("newest");
 
-const loadData = async () => {
-	isLoading.value = true;
+const loadData = async (showLoading = true) => {
+	if (showLoading) {
+		isLoading.value = true;
+	}
 	try {
-		const [submissionsData, statsData] = await Promise.all([submissionsApi.list(id), submissionsApi.stats(id)]);
+		const [submissionsData, statsData] = await Promise.all([
+			submissionsApi.list(id, pagination.params.value),
+			submissionsApi.stats(id),
+		]);
 		form.value = submissionsData.form;
-		submissions.value = submissionsData.submissions || [];
+		submissions.value = submissionsData.submissions?.data || [];
+		if (submissionsData.submissions) {
+			pagination.updateFromResponse(submissionsData.submissions);
+		}
 		stats.value = statsData;
 
 		// Set default selected field for question tab
@@ -46,6 +57,11 @@ const loadData = async () => {
 		isLoading.value = false;
 	}
 };
+
+// Watch for pagination changes
+watch(() => pagination.params.value, () => {
+	loadData(false);
+}, { deep: true });
 
 const handleDelete = async (submissionId: string) => {
 	if (!confirm(t("forms.responses.confirmDelete"))) return;
@@ -269,7 +285,7 @@ onMounted(() => {
 				</nav>
 			</div>
 			<!-- Empty State -->
-			<div v-if="submissions.length === 0" class="empty">
+			<div v-if="submissions.length === 0 && pagination.state.totalItems === 0" class="empty">
 				<UISysIcon icon="fa-solid fa-chart-column" style="font-size: 48px" />
 				<h2>{{ $t("forms.responses.empty.title") }}</h2>
 				<p>{{ $t("forms.responses.empty.description") }}</p>
@@ -279,7 +295,7 @@ onMounted(() => {
 			<div v-else-if="activeTab === 'summary'" class="summary-view">
 				<div class="summary-header-card">
 					<div class="summary-stat">
-						<span class="summary-stat-value">{{ submissions.length }}</span>
+						<span class="summary-stat-value">{{ pagination.state.totalItems }}</span>
 						<span class="summary-stat-label">{{ $t("forms.responses.summary.responses") }}</span>
 					</div>
 				</div>
@@ -447,6 +463,23 @@ onMounted(() => {
 						</template>
 					</div>
 				</div>
+
+				<!-- Pagination for Summary View -->
+				<UIPagination
+					:page="pagination.state.page"
+					:page-size="pagination.state.pageSize"
+					:total-items="pagination.state.totalItems"
+					:total-pages="pagination.state.totalPages"
+					:visible-pages="pagination.visiblePages.value"
+					:has-next-page="pagination.hasNextPage.value"
+					:has-prev-page="pagination.hasPrevPage.value"
+					@update:page="pagination.setPage"
+					@update:page-size="pagination.setPageSize"
+					@first="pagination.firstPage"
+					@prev="pagination.prevPage"
+					@next="pagination.nextPage"
+					@last="pagination.lastPage"
+				/>
 			</div>
 
 			<!-- Question Tab -->
@@ -460,7 +493,7 @@ onMounted(() => {
 							@click="selectedFieldId = field.id"
 						>
 							<span class="question-item-label">{{ field.label }}</span>
-							<span class="question-item-count">{{ submissions.length }}</span>
+							<span class="question-item-count">{{ pagination.state.totalItems }}</span>
 						</button>
 					</div>
 				</div>
@@ -569,6 +602,24 @@ onMounted(() => {
 						</div>
 					</template>
 				</div>
+
+				<!-- Pagination for Question View -->
+				<UIPagination
+					:page="pagination.state.page"
+					:page-size="pagination.state.pageSize"
+					:total-items="pagination.state.totalItems"
+					:total-pages="pagination.state.totalPages"
+					:visible-pages="pagination.visiblePages.value"
+					:has-next-page="pagination.hasNextPage.value"
+					:has-prev-page="pagination.hasPrevPage.value"
+					class="question-pagination"
+					@update:page="pagination.setPage"
+					@update:page-size="pagination.setPageSize"
+					@first="pagination.firstPage"
+					@prev="pagination.prevPage"
+					@next="pagination.nextPage"
+					@last="pagination.lastPage"
+				/>
 			</div>
 
 			<!-- Individual Tab -->
@@ -717,6 +768,23 @@ onMounted(() => {
 						</div>
 					</div>
 				</div>
+
+				<!-- Pagination for Individual View -->
+				<UIPagination
+					:page="pagination.state.page"
+					:page-size="pagination.state.pageSize"
+					:total-items="pagination.state.totalItems"
+					:total-pages="pagination.state.totalPages"
+					:visible-pages="pagination.visiblePages.value"
+					:has-next-page="pagination.hasNextPage.value"
+					:has-prev-page="pagination.hasPrevPage.value"
+					@update:page="pagination.setPage"
+					@update:page-size="pagination.setPageSize"
+					@first="pagination.firstPage"
+					@prev="pagination.prevPage"
+					@next="pagination.nextPage"
+					@last="pagination.lastPage"
+				/>
 			</div>
 		</div>
 	</div>
@@ -1111,8 +1179,13 @@ onMounted(() => {
 /* Question View */
 .question-view {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 1.5rem;
 	min-height: 500px;
+}
+
+.question-pagination {
+	width: 100%;
 }
 
 .question-sidebar {

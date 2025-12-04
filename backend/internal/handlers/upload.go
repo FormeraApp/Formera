@@ -71,7 +71,19 @@ func NewUploadHandler(store storage.Storage) *UploadHandler {
 	}
 }
 
-// UploadImage handles image uploads for form design backgrounds
+// UploadImage godoc
+// @Summary      Upload image
+// @Description  Upload an image file (for form design backgrounds)
+// @Tags         Uploads
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        file formData file true "Image file"
+// @Success      200 {object} storage.UploadResult
+// @Failure      400 {object} ErrorResponse "Invalid file"
+// @Failure      401 {object} ErrorResponse
+// @Failure      429 {object} ErrorResponse "Rate limit exceeded"
+// @Security     BearerAuth
+// @Router       /uploads/image [post]
 func (h *UploadHandler) UploadImage(c *gin.Context) {
 	// Get authenticated user
 	userID := c.GetString("user_id")
@@ -154,7 +166,17 @@ func (h *UploadHandler) UploadImage(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// UploadFile handles general file uploads (for form submissions)
+// UploadFile godoc
+// @Summary      Upload file
+// @Description  Upload a file (for form submissions)
+// @Tags         Uploads
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        file formData file true "File to upload"
+// @Success      200 {object} storage.UploadResult
+// @Failure      400 {object} ErrorResponse "Invalid file"
+// @Failure      429 {object} ErrorResponse "Rate limit exceeded"
+// @Router       /public/upload [post]
 func (h *UploadHandler) UploadFile(c *gin.Context) {
 	// Get authenticated user (or allow anonymous for public form submissions)
 	userID := c.GetString("user_id")
@@ -230,7 +252,16 @@ func (h *UploadHandler) UploadFile(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// GetFile serves a file by redirecting to the appropriate URL (local or S3 presigned)
+// GetFile godoc
+// @Summary      Get file
+// @Description  Serve a file by path (streams from storage)
+// @Tags         Files
+// @Produce      octet-stream
+// @Param        path path string true "File path"
+// @Success      200 {file} file "File content"
+// @Failure      400 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Router       /files/{path} [get]
 func (h *UploadHandler) GetFile(c *gin.Context) {
 	// Get the file path from URL parameter (e.g., "images/2025/12/abc123.png")
 	filePath := c.Param("path")
@@ -251,8 +282,8 @@ func (h *UploadHandler) GetFile(c *gin.Context) {
 		return
 	}
 
-	// Get URL for the file (generates presigned URL for S3, returns local URL for local storage)
-	url, err := h.storage.GetURLByPath(filePath)
+	// Get file content for streaming
+	fileContent, err := h.storage.GetFileByPath(filePath)
 	if err != nil {
 		if err == storage.ErrFileNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
@@ -261,13 +292,27 @@ func (h *UploadHandler) GetFile(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get file"})
 		return
 	}
+	defer fileContent.Reader.Close()
 
-	// For S3, redirect to presigned URL
-	// For local storage, the URL points to our static file server
-	c.Redirect(http.StatusTemporaryRedirect, url)
+	// Set headers for caching (1 year for immutable content-addressed files)
+	c.Header("Cache-Control", "public, max-age=31536000, immutable")
+
+	// Use Gin's DataFromReader for efficient streaming
+	c.DataFromReader(http.StatusOK, fileContent.Size, fileContent.ContentType, fileContent.Reader, nil)
 }
 
-// DeleteFile handles file deletion
+// DeleteFile godoc
+// @Summary      Delete file
+// @Description  Delete an uploaded file
+// @Tags         Uploads
+// @Produce      json
+// @Param        id path string true "File ID"
+// @Success      200 {object} MessageResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /uploads/{id} [delete]
 func (h *UploadHandler) DeleteFile(c *gin.Context) {
 	// Only authenticated users can delete
 	userID := c.GetString("user_id")

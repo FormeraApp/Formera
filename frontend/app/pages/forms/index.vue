@@ -13,8 +13,9 @@ const sortBy = ref<"updated" | "created" | "title">("updated");
 
 const loadForms = async () => {
 	try {
-		const data = await formsApi.list();
-		forms.value = data || [];
+		// Load with high page size to get all forms (client-side filtering)
+		const response = await formsApi.list({ pageSize: 100 });
+		forms.value = response.data || [];
 		isLoading.value = false;
 
 		// Load stats for all forms in parallel (non-blocking)

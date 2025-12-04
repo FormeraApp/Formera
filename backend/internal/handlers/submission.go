@@ -9,6 +9,8 @@ import (
 
 	"formera/internal/database"
 	"formera/internal/models"
+	"formera/internal/pagination"
+	"formera/internal/sanitizer"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,6 +26,20 @@ type SubmitRequest struct {
 	Metadata map[string]string     `json:"metadata,omitempty"`
 }
 
+// Submit godoc
+// @Summary      Submit form
+// @Description  Submit a response to a published form
+// @Tags         Public
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "Form ID"
+// @Param        request body SubmitRequest true "Submission data"
+// @Success      201 {object} models.Submission
+// @Failure      400 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse "Form closed or max submissions reached"
+// @Failure      404 {object} ErrorResponse
+// @Failure      429 {object} ErrorResponse "Rate limit exceeded"
+// @Router       /public/forms/{id}/submit [post]
 func (h *SubmissionHandler) Submit(c *gin.Context) {
 	formID := c.Param("id")
 
@@ -116,9 +132,12 @@ func (h *SubmissionHandler) Submit(c *gin.Context) {
 		}
 	}
 
+	// Sanitize submission data to prevent XSS
+	sanitizedData := sanitizer.SanitizeSubmissionData(req.Data)
+
 	submission := &models.Submission{
 		FormID:   formID,
-		Data:     req.Data,
+		Data:     sanitizedData,
 		Metadata: metadata,
 	}
 
@@ -133,9 +152,23 @@ func (h *SubmissionHandler) Submit(c *gin.Context) {
 	})
 }
 
+// List godoc
+// @Summary      List submissions
+// @Description  Get paginated list of form submissions
+// @Tags         Submissions
+// @Produce      json
+// @Param        id path string true "Form ID"
+// @Param        page query int false "Page number" default(1)
+// @Param        page_size query int false "Items per page" default(20)
+// @Success      200 {object} SubmissionListResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /forms/{id}/submissions [get]
 func (h *SubmissionHandler) List(c *gin.Context) {
 	userID := c.GetString("user_id")
 	formID := c.Param("id")
+	params := pagination.GetParams(c)
 
 	var form models.Form
 	if result := database.DB.Where("id = ? AND user_id = ?", formID, userID).First(&form); result.Error != nil {
@@ -143,19 +176,36 @@ func (h *SubmissionHandler) List(c *gin.Context) {
 		return
 	}
 
+	var totalItems int64
+	database.DB.Model(&models.Submission{}).Where("form_id = ?", formID).Count(&totalItems)
+
 	var submissions []models.Submission
-	if result := database.DB.Where("form_id = ?", formID).Order("created_at DESC").Find(&submissions); result.Error != nil {
+	if result := database.DB.Where("form_id = ?", formID).
+		Order("created_at DESC").
+		Scopes(pagination.Paginate(params)).
+		Find(&submissions); result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch submissions"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"form":        form,
-		"submissions": submissions,
-		"count":       len(submissions),
+		"submissions": pagination.CreateResult(submissions, params, totalItems),
 	})
 }
 
+// Get godoc
+// @Summary      Get submission
+// @Description  Get a specific submission by ID
+// @Tags         Submissions
+// @Produce      json
+// @Param        id path string true "Form ID"
+// @Param        submissionId path string true "Submission ID"
+// @Success      200 {object} models.Submission
+// @Failure      401 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /forms/{id}/submissions/{submissionId} [get]
 func (h *SubmissionHandler) Get(c *gin.Context) {
 	userID := c.GetString("user_id")
 	formID := c.Param("id")
@@ -176,6 +226,18 @@ func (h *SubmissionHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, submission)
 }
 
+// Delete godoc
+// @Summary      Delete submission
+// @Description  Delete a specific submission
+// @Tags         Submissions
+// @Produce      json
+// @Param        id path string true "Form ID"
+// @Param        submissionId path string true "Submission ID"
+// @Success      200 {object} MessageResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /forms/{id}/submissions/{submissionId} [delete]
 func (h *SubmissionHandler) Delete(c *gin.Context) {
 	userID := c.GetString("user_id")
 	formID := c.Param("id")
@@ -195,6 +257,17 @@ func (h *SubmissionHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Submission deleted successfully"})
 }
 
+// Stats godoc
+// @Summary      Get form statistics
+// @Description  Get submission statistics for a form
+// @Tags         Submissions
+// @Produce      json
+// @Param        id path string true "Form ID"
+// @Success      200 {object} FormStatsResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /forms/{id}/stats [get]
 func (h *SubmissionHandler) Stats(c *gin.Context) {
 	userID := c.GetString("user_id")
 	formID := c.Param("id")
@@ -236,6 +309,17 @@ func (h *SubmissionHandler) Stats(c *gin.Context) {
 	})
 }
 
+// ExportCSV godoc
+// @Summary      Export submissions as CSV
+// @Description  Download all submissions as a CSV file
+// @Tags         Submissions
+// @Produce      text/csv
+// @Param        id path string true "Form ID"
+// @Success      200 {file} file "CSV file"
+// @Failure      401 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /forms/{id}/export/csv [get]
 func (h *SubmissionHandler) ExportCSV(c *gin.Context) {
 	userID := c.GetString("user_id")
 	formID := c.Param("id")
@@ -285,6 +369,17 @@ func (h *SubmissionHandler) ExportCSV(c *gin.Context) {
 	}
 }
 
+// ExportJSON godoc
+// @Summary      Export submissions as JSON
+// @Description  Download all submissions as a JSON file
+// @Tags         Submissions
+// @Produce      json
+// @Param        id path string true "Form ID"
+// @Success      200 {array} map[string]interface{} "JSON array of submissions"
+// @Failure      401 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /forms/{id}/export/json [get]
 func (h *SubmissionHandler) ExportJSON(c *gin.Context) {
 	userID := c.GetString("user_id")
 	formID := c.Param("id")
@@ -318,6 +413,17 @@ func (h *SubmissionHandler) ExportJSON(c *gin.Context) {
 	c.JSON(http.StatusOK, exportData)
 }
 
+// SubmissionsByDate godoc
+// @Summary      Get submissions by date
+// @Description  Get submission counts grouped by date
+// @Tags         Submissions
+// @Produce      json
+// @Param        id path string true "Form ID"
+// @Success      200 {array} SubmissionsByDateResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /forms/{id}/submissions/by-date [get]
 func (h *SubmissionHandler) SubmissionsByDate(c *gin.Context) {
 	userID := c.GetString("user_id")
 	formID := c.Param("id")

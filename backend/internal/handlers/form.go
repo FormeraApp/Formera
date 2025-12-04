@@ -7,6 +7,8 @@ import (
 
 	"formera/internal/database"
 	"formera/internal/models"
+	"formera/internal/pagination"
+	"formera/internal/sanitizer"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -60,6 +62,18 @@ func normalizeSlug(slug string) string {
 	return slug
 }
 
+// Create godoc
+// @Summary      Create form
+// @Description  Create a new form
+// @Tags         Forms
+// @Accept       json
+// @Produce      json
+// @Param        request body CreateFormRequest true "Form data"
+// @Success      201 {object} models.Form
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /forms [post]
 func (h *FormHandler) Create(c *gin.Context) {
 	userID := c.GetString("user_id")
 
@@ -71,8 +85,8 @@ func (h *FormHandler) Create(c *gin.Context) {
 
 	form := &models.Form{
 		UserID:      userID,
-		Title:       req.Title,
-		Description: req.Description,
+		Title:       sanitizer.StripHTML(req.Title),
+		Description: sanitizer.SanitizeHTML(req.Description),
 		Fields:      req.Fields,
 		Settings:    req.Settings,
 		Status:      models.FormStatusDraft,
@@ -86,18 +100,47 @@ func (h *FormHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, form)
 }
 
+// List godoc
+// @Summary      List forms
+// @Description  Get paginated list of user's forms
+// @Tags         Forms
+// @Produce      json
+// @Param        page query int false "Page number" default(1)
+// @Param        page_size query int false "Items per page" default(20)
+// @Success      200 {object} pagination.Result
+// @Failure      401 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /forms [get]
 func (h *FormHandler) List(c *gin.Context) {
 	userID := c.GetString("user_id")
+	params := pagination.GetParams(c)
+
+	var totalItems int64
+	database.DB.Model(&models.Form{}).Where("user_id = ?", userID).Count(&totalItems)
 
 	var forms []models.Form
-	if result := database.DB.Where("user_id = ?", userID).Order("created_at DESC").Find(&forms); result.Error != nil {
+	if result := database.DB.Where("user_id = ?", userID).
+		Order("created_at DESC").
+		Scopes(pagination.Paginate(params)).
+		Find(&forms); result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch forms"})
 		return
 	}
 
-	c.JSON(http.StatusOK, forms)
+	c.JSON(http.StatusOK, pagination.CreateResult(forms, params, totalItems))
 }
 
+// Get godoc
+// @Summary      Get form
+// @Description  Get a form by ID
+// @Tags         Forms
+// @Produce      json
+// @Param        id path string true "Form ID"
+// @Success      200 {object} models.Form
+// @Failure      401 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /forms/{id} [get]
 func (h *FormHandler) Get(c *gin.Context) {
 	userID := c.GetString("user_id")
 	formID := c.Param("id")
@@ -111,6 +154,15 @@ func (h *FormHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, form)
 }
 
+// GetPublic godoc
+// @Summary      Get public form
+// @Description  Get a published form by ID or slug (public access)
+// @Tags         Public
+// @Produce      json
+// @Param        id path string true "Form ID or slug"
+// @Success      200 {object} models.Form
+// @Failure      404 {object} ErrorResponse
+// @Router       /public/forms/{id} [get]
 func (h *FormHandler) GetPublic(c *gin.Context) {
 	identifier := c.Param("id")
 
@@ -136,6 +188,18 @@ func (h *FormHandler) GetPublic(c *gin.Context) {
 	c.JSON(http.StatusOK, form)
 }
 
+// VerifyPassword godoc
+// @Summary      Verify form password
+// @Description  Verify password for a password-protected form
+// @Tags         Public
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "Form ID or slug"
+// @Param        request body VerifyPasswordRequest true "Password"
+// @Success      200 {object} models.Form "Returns form if password is valid"
+// @Failure      400 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Router       /public/forms/{id}/verify-password [post]
 func (h *FormHandler) VerifyPassword(c *gin.Context) {
 	identifier := c.Param("id")
 
@@ -168,6 +232,18 @@ func (h *FormHandler) VerifyPassword(c *gin.Context) {
 	})
 }
 
+// CheckSlugAvailability godoc
+// @Summary      Check slug availability
+// @Description  Check if a slug is available for use
+// @Tags         Forms
+// @Produce      json
+// @Param        slug query string true "Slug to check"
+// @Param        form_id query string false "Exclude this form from check"
+// @Success      200 {object} SlugCheckResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /forms/check-slug [get]
 func (h *FormHandler) CheckSlugAvailability(c *gin.Context) {
 	userID := c.GetString("user_id")
 	slug := c.Query("slug")
@@ -210,6 +286,21 @@ func (h *FormHandler) CheckSlugAvailability(c *gin.Context) {
 	})
 }
 
+// Update godoc
+// @Summary      Update form
+// @Description  Update a form by ID
+// @Tags         Forms
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "Form ID"
+// @Param        request body UpdateFormRequest true "Update data"
+// @Success      200 {object} models.Form
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Failure      409 {object} ErrorResponse "Slug already taken"
+// @Security     BearerAuth
+// @Router       /forms/{id} [put]
 func (h *FormHandler) Update(c *gin.Context) {
 	userID := c.GetString("user_id")
 	formID := c.Param("id")
@@ -227,10 +318,10 @@ func (h *FormHandler) Update(c *gin.Context) {
 	}
 
 	if req.Title != "" {
-		form.Title = req.Title
+		form.Title = sanitizer.StripHTML(req.Title)
 	}
 	if req.Description != "" {
-		form.Description = req.Description
+		form.Description = sanitizer.SanitizeHTML(req.Description)
 	}
 	if req.Fields != nil {
 		form.Fields = req.Fields
@@ -285,6 +376,17 @@ func (h *FormHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, form)
 }
 
+// Delete godoc
+// @Summary      Delete form
+// @Description  Delete a form and all its submissions
+// @Tags         Forms
+// @Produce      json
+// @Param        id path string true "Form ID"
+// @Success      200 {object} MessageResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /forms/{id} [delete]
 func (h *FormHandler) Delete(c *gin.Context) {
 	userID := c.GetString("user_id")
 	formID := c.Param("id")
@@ -295,16 +397,47 @@ func (h *FormHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	database.DB.Where("form_id = ?", formID).Delete(&models.Submission{})
+	// Use transaction to ensure atomicity
+	tx := database.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
+		return
+	}
 
-	if result := database.DB.Delete(&form); result.Error != nil {
+	// Delete all submissions first
+	if result := tx.Where("form_id = ?", formID).Delete(&models.Submission{}); result.Error != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete submissions"})
+		return
+	}
+
+	// Then delete the form
+	if result := tx.Delete(&form); result.Error != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete form"})
+		return
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Form deleted successfully"})
 }
 
+// Duplicate godoc
+// @Summary      Duplicate form
+// @Description  Create a copy of an existing form
+// @Tags         Forms
+// @Produce      json
+// @Param        id path string true "Form ID"
+// @Success      201 {object} models.Form
+// @Failure      401 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /forms/{id}/duplicate [post]
 func (h *FormHandler) Duplicate(c *gin.Context) {
 	userID := c.GetString("user_id")
 	formID := c.Param("id")

@@ -1,0 +1,55 @@
+stages:
+  - build
+  - docs
+  - deploy
+
+variables:
+  GO_VERSION: "1.23"
+
+# Generate Swagger documentation
+swagger:
+  stage: docs
+  image: golang:${GO_VERSION}
+  script:
+    - go install github.com/swaggo/swag/cmd/swag@latest
+    - cd backend
+    - swag init -g cmd/server/main.go -o docs --parseInternal --parseDependency
+    - cp docs/swagger.json ../api-docs/
+  artifacts:
+    paths:
+      - api-docs/
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# Deploy API documentation to GitLab Pages
+pages:
+  stage: deploy
+  dependencies:
+    - swagger
+  script:
+    - mkdir -p public
+    - cp -r api-docs/* public/
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+  environment:
+    name: documentation
+    url: https://$CI_PROJECT_NAMESPACE.gitlab.io/$CI_PROJECT_NAME
+
+# Optional: Build backend to verify code compiles
+build:backend:
+  stage: build
+  image: golang:${GO_VERSION}
+  script:
+    - cd backend
+    - go mod download
+    - go build -v ./...
+  only:
+    - main
+    - develop
+    - merge_requests

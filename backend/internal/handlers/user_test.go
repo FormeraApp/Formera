@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"formera/internal/models"
+	"formera/internal/pagination"
 	"formera/internal/testutil"
 
 	"github.com/gin-gonic/gin"
@@ -31,13 +32,13 @@ func TestUserHandler_List(t *testing.T) {
 		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
 	}
 
-	var users []models.User
-	if err := json.Unmarshal(w.Body.Bytes(), &users); err != nil {
+	var response pagination.Result
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
 		t.Fatalf("failed to unmarshal response: %v", err)
 	}
 
-	if len(users) != 2 {
-		t.Errorf("expected 2 users, got %d", len(users))
+	if response.TotalItems != 2 {
+		t.Errorf("expected 2 users, got %d", response.TotalItems)
 	}
 }
 

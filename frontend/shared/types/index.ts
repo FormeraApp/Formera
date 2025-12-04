@@ -198,10 +198,24 @@ export interface AuthResponse {
 	user: User;
 }
 
+// Generic pagination response from backend
+export interface PaginatedResponse<T> {
+	data: T;
+	page: number;
+	page_size: number;
+	total_items: number;
+	total_pages: number;
+}
+
+// Pagination parameters for API requests
+export interface PaginationParams {
+	page?: number;
+	pageSize?: number;
+}
+
 export interface SubmissionsResponse {
 	form: Form;
-	submissions: Submission[];
-	count: number;
+	submissions: PaginatedResponse<Submission[]>;
 }
 
 export interface FormStats {
