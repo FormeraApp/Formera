@@ -39,6 +39,13 @@ type SetupRequest struct {
 	AllowRegistration bool   `json:"allow_registration"`
 }
 
+// GetStatus godoc
+// @Summary      Get setup status
+// @Description  Get application setup status and public settings
+// @Tags         Setup
+// @Produce      json
+// @Success      200 {object} SetupStatusResponse
+// @Router       /setup/status [get]
 func (h *SetupHandler) GetStatus(c *gin.Context) {
 	var settings models.Settings
 	database.DB.First(&settings)
@@ -63,6 +70,16 @@ func (h *SetupHandler) GetStatus(c *gin.Context) {
 	})
 }
 
+// CompleteSetup godoc
+// @Summary      Complete initial setup
+// @Description  Create the first admin user and complete setup
+// @Tags         Setup
+// @Accept       json
+// @Produce      json
+// @Param        request body SetupRequest true "Setup data"
+// @Success      200 {object} AuthResponse
+// @Failure      400 {object} ErrorResponse "Setup already completed or invalid data"
+// @Router       /setup/complete [post]
 func (h *SetupHandler) CompleteSetup(c *gin.Context) {
 	var userCount int64
 	database.DB.Model(&models.User{}).Count(&userCount)
@@ -118,6 +135,16 @@ func (h *SetupHandler) CompleteSetup(c *gin.Context) {
 	})
 }
 
+// GetSettings godoc
+// @Summary      Get settings
+// @Description  Get application settings (admin only)
+// @Tags         Settings
+// @Produce      json
+// @Success      200 {object} models.Settings
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse "Admin access required"
+// @Security     BearerAuth
+// @Router       /settings [get]
 func (h *SetupHandler) GetSettings(c *gin.Context) {
 	var settings models.Settings
 	database.DB.First(&settings)
@@ -138,6 +165,19 @@ type UpdateSettingsRequest struct {
 	Theme              string              `json:"theme"`
 }
 
+// UpdateSettings godoc
+// @Summary      Update settings
+// @Description  Update application settings (admin only)
+// @Tags         Settings
+// @Accept       json
+// @Produce      json
+// @Param        request body UpdateSettingsRequest true "Settings data"
+// @Success      200 {object} models.Settings
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse "Admin access required"
+// @Security     BearerAuth
+// @Router       /settings [put]
 func (h *SetupHandler) UpdateSettings(c *gin.Context) {
 	var req UpdateSettingsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

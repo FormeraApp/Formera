@@ -36,6 +36,18 @@ type AuthResponse struct {
 	User  *models.User `json:"user"`
 }
 
+// Register godoc
+// @Summary      Register new user
+// @Description  Create a new user account (if registration is enabled)
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        request body RegisterRequest true "Registration data"
+// @Success      201 {object} AuthResponse
+// @Failure      400 {object} ErrorResponse "Invalid request"
+// @Failure      403 {object} ErrorResponse "Registration disabled"
+// @Failure      409 {object} ErrorResponse "Email already registered"
+// @Router       /auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var settings models.Settings
 	database.DB.First(&settings)
@@ -84,6 +96,18 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	})
 }
 
+// Login godoc
+// @Summary      Login user
+// @Description  Authenticate with email and password
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        request body LoginRequest true "Login credentials"
+// @Success      200 {object} AuthResponse
+// @Failure      400 {object} ErrorResponse "Invalid request"
+// @Failure      401 {object} ErrorResponse "Invalid credentials"
+// @Failure      429 {object} ErrorResponse "Rate limit exceeded"
+// @Router       /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -114,6 +138,16 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	})
 }
 
+// Me godoc
+// @Summary      Get current user
+// @Description  Get the authenticated user's profile
+// @Tags         Auth
+// @Produce      json
+// @Success      200 {object} models.User
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      404 {object} ErrorResponse "User not found"
+// @Security     BearerAuth
+// @Router       /auth/me [get]
 func (h *AuthHandler) Me(c *gin.Context) {
 	userID := c.GetString("user_id")
 
@@ -130,6 +164,7 @@ func (h *AuthHandler) generateToken(user *models.User) (string, error) {
 	claims := &middleware.Claims{
 		UserID: user.ID,
 		Email:  user.Email,
+		Role:   string(user.Role),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * 7 * time.Hour)), // 7 days
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

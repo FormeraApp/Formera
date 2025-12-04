@@ -48,6 +48,7 @@ const selectedTheme = ref<"light" | "dark" | "system">("system");
 // Users state
 const users = ref<User[]>([]);
 const isLoadingUsers = ref(false);
+const usersPagination = usePagination(5);
 const showUserModal = ref(false);
 const editingUser = ref<User | null>(null);
 const userForm = ref({
@@ -88,13 +89,20 @@ const loadSettings = async () => {
 const loadUsers = async () => {
 	isLoadingUsers.value = true;
 	try {
-		users.value = await usersApi.list();
+		const response = await usersApi.list(usersPagination.params.value);
+		users.value = response.data || [];
+		usersPagination.updateFromResponse(response);
 	} catch (error) {
 		console.error("Failed to load users:", error);
 	} finally {
 		isLoadingUsers.value = false;
 	}
 };
+
+// Watch for pagination changes
+watch(() => usersPagination.params.value, () => {
+	loadUsers();
+}, { deep: true });
 
 const handleSave = async () => {
 	if (!settings.value) return;
@@ -681,6 +689,23 @@ onMounted(() => {
 									</button>
 								</div>
 							</div>
+
+							<!-- Pagination -->
+							<UIPagination
+								:page="usersPagination.state.page"
+								:page-size="usersPagination.state.pageSize"
+								:total-items="usersPagination.state.totalItems"
+								:total-pages="usersPagination.state.totalPages"
+								:visible-pages="usersPagination.visiblePages.value"
+								:has-next-page="usersPagination.hasNextPage.value"
+								:has-prev-page="usersPagination.hasPrevPage.value"
+								@update:page="usersPagination.setPage"
+								@update:page-size="usersPagination.setPageSize"
+								@first="usersPagination.firstPage"
+								@prev="usersPagination.prevPage"
+								@next="usersPagination.nextPage"
+								@last="usersPagination.lastPage"
+							/>
 						</div>
 					</div>
 				</div>

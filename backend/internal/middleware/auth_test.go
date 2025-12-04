@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"formera/internal/models"
-	"formera/internal/testutil"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -17,7 +16,7 @@ func init() {
 	gin.SetMode(gin.TestMode)
 }
 
-func generateTestToken(secret, userID, email string, expired bool) string {
+func generateTestToken(secret, userID, email, role string, expired bool) string {
 	expiresAt := time.Now().Add(time.Hour)
 	if expired {
 		expiresAt = time.Now().Add(-time.Hour)
@@ -26,6 +25,7 @@ func generateTestToken(secret, userID, email string, expired bool) string {
 	claims := &Claims{
 		UserID: userID,
 		Email:  email,
+		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -39,7 +39,7 @@ func generateTestToken(secret, userID, email string, expired bool) string {
 
 func TestAuthMiddleware_ValidToken(t *testing.T) {
 	secret := "test-secret"
-	token := generateTestToken(secret, "user-123", "test@example.com", false)
+	token := generateTestToken(secret, "user-123", "test@example.com", "user", false)
 
 	router := gin.New()
 	router.Use(AuthMiddleware(secret))
@@ -111,7 +111,7 @@ func TestAuthMiddleware_InvalidFormat(t *testing.T) {
 
 func TestAuthMiddleware_ExpiredToken(t *testing.T) {
 	secret := "test-secret"
-	token := generateTestToken(secret, "user-123", "test@example.com", true)
+	token := generateTestToken(secret, "user-123", "test@example.com", "user", true)
 
 	router := gin.New()
 	router.Use(AuthMiddleware(secret))
@@ -131,7 +131,7 @@ func TestAuthMiddleware_ExpiredToken(t *testing.T) {
 }
 
 func TestAuthMiddleware_InvalidSecret(t *testing.T) {
-	token := generateTestToken("correct-secret", "user-123", "test@example.com", false)
+	token := generateTestToken("correct-secret", "user-123", "test@example.com", "user", false)
 
 	router := gin.New()
 	router.Use(AuthMiddleware("wrong-secret"))
@@ -151,12 +151,10 @@ func TestAuthMiddleware_InvalidSecret(t *testing.T) {
 }
 
 func TestAdminMiddleware_AdminUser(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	admin := testutil.CreateTestUser(t, db, "admin@example.com", "password123", models.RoleAdmin)
-
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
-		c.Set("user_id", admin.ID)
+		c.Set("user_id", "admin-123")
+		c.Set("user_role", string(models.RoleAdmin))
 		c.Next()
 	})
 	router.Use(AdminMiddleware())
@@ -175,12 +173,10 @@ func TestAdminMiddleware_AdminUser(t *testing.T) {
 }
 
 func TestAdminMiddleware_NonAdminUser(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "user@example.com", "password123", models.RoleUser)
-
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
-		c.Set("user_id", user.ID)
+		c.Set("user_id", "user-123")
+		c.Set("user_role", string(models.RoleUser))
 		c.Next()
 	})
 	router.Use(AdminMiddleware())
@@ -198,33 +194,9 @@ func TestAdminMiddleware_NonAdminUser(t *testing.T) {
 	}
 }
 
-func TestAdminMiddleware_NoUserID(t *testing.T) {
-	testutil.SetupTestDB(t)
-
+func TestAdminMiddleware_NoRole(t *testing.T) {
 	router := gin.New()
-	router.Use(AdminMiddleware())
-	router.GET("/admin", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{})
-	})
-
-	req := httptest.NewRequest(http.MethodGet, "/admin", nil)
-	w := httptest.NewRecorder()
-
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusUnauthorized {
-		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
-	}
-}
-
-func TestAdminMiddleware_UserNotFound(t *testing.T) {
-	testutil.SetupTestDB(t)
-
-	router := gin.New()
-	router.Use(func(c *gin.Context) {
-		c.Set("user_id", "non-existent-id")
-		c.Next()
-	})
+	// No user_role set in context
 	router.Use(AdminMiddleware())
 	router.GET("/admin", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{})

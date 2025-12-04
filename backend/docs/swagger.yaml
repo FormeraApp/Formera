@@ -1,0 +1,1434 @@
+basePath: /api
+definitions:
+  formera_internal_models.FieldType:
+    enum:
+    - text
+    - textarea
+    - number
+    - email
+    - phone
+    - date
+    - time
+    - url
+    - richtext
+    - select
+    - radio
+    - checkbox
+    - dropdown
+    - file
+    - rating
+    - scale
+    - signature
+    - section
+    - pagebreak
+    - divider
+    - heading
+    - paragraph
+    - image
+    type: string
+    x-enum-varnames:
+    - FieldTypeText
+    - FieldTypeTextarea
+    - FieldTypeNumber
+    - FieldTypeEmail
+    - FieldTypePhone
+    - FieldTypeDate
+    - FieldTypeTime
+    - FieldTypeURL
+    - FieldTypeRichtext
+    - FieldTypeSelect
+    - FieldTypeRadio
+    - FieldTypeCheckbox
+    - FieldTypeDropdown
+    - FieldTypeFile
+    - FieldTypeRating
+    - FieldTypeScale
+    - FieldTypeSignature
+    - FieldTypeSection
+    - FieldTypePagebreak
+    - FieldTypeDivider
+    - FieldTypeHeading
+    - FieldTypeParagraph
+    - FieldTypeImage
+  formera_internal_models.FooterLink:
+    properties:
+      label:
+        type: string
+      url:
+        type: string
+    type: object
+  formera_internal_models.Form:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      fields:
+        items:
+          $ref: '#/definitions/formera_internal_models.FormField'
+        type: array
+      id:
+        type: string
+      password_protected:
+        description: Password protection
+        type: boolean
+      settings:
+        $ref: '#/definitions/formera_internal_models.FormSettings'
+      slug:
+        type: string
+      status:
+        $ref: '#/definitions/formera_internal_models.FormStatus'
+      submissions:
+        items:
+          $ref: '#/definitions/formera_internal_models.Submission'
+        type: array
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  formera_internal_models.FormDesign:
+    properties:
+      backgroundColor:
+        type: string
+      backgroundImage:
+        type: string
+      backgroundPosition:
+        type: string
+      backgroundSize:
+        type: string
+      borderRadius:
+        type: string
+      buttonStyle:
+        type: string
+      fontFamily:
+        type: string
+      formBackgroundColor:
+        type: string
+      headerStyle:
+        type: string
+      maxWidth:
+        type: string
+      primaryColor:
+        type: string
+      textColor:
+        type: string
+    type: object
+  formera_internal_models.FormField:
+    properties:
+      allowedTypes:
+        description: File Upload
+        items:
+          type: string
+        type: array
+      collapsed:
+        type: boolean
+      collapsible:
+        type: boolean
+      content:
+        description: Layout-specific
+        type: string
+      description:
+        description: Description/Help text
+        type: string
+      headingLevel:
+        type: integer
+      id:
+        type: string
+      imageAlt:
+        type: string
+      imageUrl:
+        type: string
+      label:
+        type: string
+      maxFileSize:
+        type: integer
+      maxLabel:
+        type: string
+      maxValue:
+        type: integer
+      minLabel:
+        type: string
+      minValue:
+        description: Rating/Scale
+        type: integer
+      multiple:
+        type: boolean
+      options:
+        items:
+          type: string
+        type: array
+      order:
+        type: integer
+      placeholder:
+        type: string
+      required:
+        type: boolean
+      richTextContent:
+        description: Rich Text
+        type: string
+      sectionDescription:
+        type: string
+      sectionTitle:
+        description: Section-specific
+        type: string
+      type:
+        $ref: '#/definitions/formera_internal_models.FieldType'
+      validation:
+        additionalProperties: true
+        type: object
+    type: object
+  formera_internal_models.FormSettings:
+    properties:
+      allow_multiple:
+        type: boolean
+      design:
+        $ref: '#/definitions/formera_internal_models.FormDesign'
+      end_date:
+        type: string
+      max_submissions:
+        type: integer
+      notification_email:
+        type: string
+      notify_on_submission:
+        type: boolean
+      require_login:
+        type: boolean
+      start_date:
+        type: string
+      submit_button_text:
+        type: string
+      success_message:
+        type: string
+    type: object
+  formera_internal_models.FormStatus:
+    enum:
+    - draft
+    - published
+    - closed
+    type: string
+    x-enum-varnames:
+    - FormStatusDraft
+    - FormStatusPublished
+    - FormStatusClosed
+  formera_internal_models.Settings:
+    properties:
+      allow_registration:
+        type: boolean
+      app_name:
+        type: string
+      created_at:
+        type: string
+      favicon_url:
+        type: string
+      footer_links:
+        items:
+          $ref: '#/definitions/formera_internal_models.FooterLink'
+        type: array
+      id:
+        type: integer
+      language:
+        description: Language and Theme
+        type: string
+      login_background_url:
+        type: string
+      logo_show_text:
+        type: boolean
+      logo_url:
+        type: string
+      primary_color:
+        description: Customization
+        type: string
+      setup_completed:
+        type: boolean
+      theme:
+        description: '"light", "dark", or "system"'
+        type: string
+      updated_at:
+        type: string
+    type: object
+  formera_internal_models.Submission:
+    properties:
+      created_at:
+        type: string
+      data:
+        $ref: '#/definitions/formera_internal_models.SubmissionData'
+      form_id:
+        type: string
+      id:
+        type: string
+      metadata:
+        $ref: '#/definitions/formera_internal_models.SubmissionMetadata'
+    type: object
+  formera_internal_models.SubmissionData:
+    additionalProperties: true
+    type: object
+  formera_internal_models.SubmissionMetadata:
+    properties:
+      ip:
+        type: string
+      referrer:
+        type: string
+      tracking:
+        additionalProperties:
+          type: string
+        type: object
+      user_agent:
+        type: string
+      utm_campaign:
+        type: string
+      utm_content:
+        type: string
+      utm_medium:
+        type: string
+      utm_source:
+        description: UTM/Tracking parameters
+        type: string
+      utm_term:
+        type: string
+    type: object
+  formera_internal_models.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      forms:
+        items:
+          $ref: '#/definitions/formera_internal_models.Form'
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      role:
+        $ref: '#/definitions/formera_internal_models.UserRole'
+      updated_at:
+        type: string
+    type: object
+  formera_internal_models.UserRole:
+    enum:
+    - admin
+    - user
+    type: string
+    x-enum-varnames:
+    - RoleAdmin
+    - RoleUser
+  formera_internal_pagination.Result:
+    properties:
+      data: {}
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total_items:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  formera_internal_storage.UploadResult:
+    properties:
+      filename:
+        type: string
+      id:
+        type: string
+      mimeType:
+        type: string
+      path:
+        description: Relative path (e.g., "images/2025/12/abc123.png")
+        type: string
+      size:
+        type: integer
+      url:
+        description: Full URL for immediate use
+        type: string
+    type: object
+  internal_handlers.AuthResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/formera_internal_models.User'
+    type: object
+  internal_handlers.CreateFormRequest:
+    properties:
+      description:
+        type: string
+      fields:
+        items:
+          $ref: '#/definitions/formera_internal_models.FormField'
+        type: array
+      settings:
+        $ref: '#/definitions/formera_internal_models.FormSettings'
+      title:
+        type: string
+    required:
+    - title
+    type: object
+  internal_handlers.ErrorResponse:
+    properties:
+      error:
+        example: Invalid request
+        type: string
+    type: object
+  internal_handlers.FormStatsResponse:
+    properties:
+      field_stats:
+        additionalProperties: true
+        type: object
+      total_submissions:
+        example: 150
+        type: integer
+    type: object
+  internal_handlers.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  internal_handlers.MessageResponse:
+    properties:
+      message:
+        example: Operation successful
+        type: string
+    type: object
+  internal_handlers.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  internal_handlers.SetupRequest:
+    properties:
+      allow_registration:
+        type: boolean
+      app_name:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  internal_handlers.SetupStatusResponse:
+    properties:
+      allow_registration:
+        type: boolean
+      app_name:
+        type: string
+      favicon_url:
+        type: string
+      footer_links:
+        items:
+          $ref: '#/definitions/formera_internal_models.FooterLink'
+        type: array
+      language:
+        type: string
+      login_background_url:
+        type: string
+      logo_show_text:
+        type: boolean
+      logo_url:
+        type: string
+      primary_color:
+        type: string
+      setup_required:
+        type: boolean
+      theme:
+        type: string
+    type: object
+  internal_handlers.SlugCheckResponse:
+    properties:
+      available:
+        example: true
+        type: boolean
+      reason:
+        example: taken
+        type: string
+      slug:
+        example: contact-form
+        type: string
+    type: object
+  internal_handlers.SubmissionListResponse:
+    properties:
+      form: {}
+      submissions: {}
+    type: object
+  internal_handlers.SubmissionsByDateResponse:
+    properties:
+      count:
+        example: 25
+        type: integer
+      date:
+        example: "2025-01-15"
+        type: string
+    type: object
+  internal_handlers.SubmitRequest:
+    properties:
+      data:
+        $ref: '#/definitions/formera_internal_models.SubmissionData'
+      metadata:
+        additionalProperties:
+          type: string
+        type: object
+    required:
+    - data
+    type: object
+  internal_handlers.UpdateFormRequest:
+    properties:
+      description:
+        type: string
+      fields:
+        items:
+          $ref: '#/definitions/formera_internal_models.FormField'
+        type: array
+      password:
+        description: Raw password, will be hashed
+        type: string
+      password_protected:
+        type: boolean
+      settings:
+        $ref: '#/definitions/formera_internal_models.FormSettings'
+      slug:
+        type: string
+      status:
+        $ref: '#/definitions/formera_internal_models.FormStatus'
+      title:
+        type: string
+    type: object
+  internal_handlers.UpdateSettingsRequest:
+    properties:
+      allow_registration:
+        type: boolean
+      app_name:
+        type: string
+      favicon_url:
+        type: string
+      footer_links:
+        items:
+          $ref: '#/definitions/formera_internal_models.FooterLink'
+        type: array
+      language:
+        type: string
+      login_background_url:
+        type: string
+      logo_show_text:
+        type: boolean
+      logo_url:
+        type: string
+      primary_color:
+        type: string
+      theme:
+        type: string
+    type: object
+  internal_handlers.VerifyPasswordRequest:
+    properties:
+      password:
+        type: string
+    required:
+    - password
+    type: object
+host: localhost:8080
+info:
+  contact:
+    name: API Support
+    url: https://github.com/your-repo/formera
+  description: REST API for Formera - a self-hosted form builder application
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Formera API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate with email and password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers.AuthResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "429":
+          description: Rate limit exceeded
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Login user
+      tags:
+      - Auth
+  /auth/me:
+    get:
+      description: Get the authenticated user's profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/formera_internal_models.User'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account (if registration is enabled)
+      parameters:
+      - description: Registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_handlers.AuthResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Registration disabled
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "409":
+          description: Email already registered
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Register new user
+      tags:
+      - Auth
+  /files/{path}:
+    get:
+      description: Serve a file by path (streams from storage)
+      parameters:
+      - description: File path
+        in: path
+        name: path
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: File content
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Get file
+      tags:
+      - Files
+  /forms:
+    get:
+      description: Get paginated list of user's forms
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/formera_internal_pagination.Result'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List forms
+      tags:
+      - Forms
+    post:
+      consumes:
+      - application/json
+      description: Create a new form
+      parameters:
+      - description: Form data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.CreateFormRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/formera_internal_models.Form'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create form
+      tags:
+      - Forms
+  /forms/{id}:
+    delete:
+      description: Delete a form and all its submissions
+      parameters:
+      - description: Form ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers.MessageResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete form
+      tags:
+      - Forms
+    get:
+      description: Get a form by ID
+      parameters:
+      - description: Form ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/formera_internal_models.Form'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get form
+      tags:
+      - Forms
+    put:
+      consumes:
+      - application/json
+      description: Update a form by ID
+      parameters:
+      - description: Form ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.UpdateFormRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/formera_internal_models.Form'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "409":
+          description: Slug already taken
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update form
+      tags:
+      - Forms
+  /forms/{id}/duplicate:
+    post:
+      description: Create a copy of an existing form
+      parameters:
+      - description: Form ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/formera_internal_models.Form'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Duplicate form
+      tags:
+      - Forms
+  /forms/{id}/export/csv:
+    get:
+      description: Download all submissions as a CSV file
+      parameters:
+      - description: Form ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - text/csv
+      responses:
+        "200":
+          description: CSV file
+          schema:
+            type: file
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Export submissions as CSV
+      tags:
+      - Submissions
+  /forms/{id}/export/json:
+    get:
+      description: Download all submissions as a JSON file
+      parameters:
+      - description: Form ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JSON array of submissions
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Export submissions as JSON
+      tags:
+      - Submissions
+  /forms/{id}/stats:
+    get:
+      description: Get submission statistics for a form
+      parameters:
+      - description: Form ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers.FormStatsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get form statistics
+      tags:
+      - Submissions
+  /forms/{id}/submissions:
+    get:
+      description: Get paginated list of form submissions
+      parameters:
+      - description: Form ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers.SubmissionListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List submissions
+      tags:
+      - Submissions
+  /forms/{id}/submissions/{submissionId}:
+    delete:
+      description: Delete a specific submission
+      parameters:
+      - description: Form ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Submission ID
+        in: path
+        name: submissionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers.MessageResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete submission
+      tags:
+      - Submissions
+    get:
+      description: Get a specific submission by ID
+      parameters:
+      - description: Form ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Submission ID
+        in: path
+        name: submissionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/formera_internal_models.Submission'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get submission
+      tags:
+      - Submissions
+  /forms/{id}/submissions/by-date:
+    get:
+      description: Get submission counts grouped by date
+      parameters:
+      - description: Form ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_handlers.SubmissionsByDateResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get submissions by date
+      tags:
+      - Submissions
+  /forms/check-slug:
+    get:
+      description: Check if a slug is available for use
+      parameters:
+      - description: Slug to check
+        in: query
+        name: slug
+        required: true
+        type: string
+      - description: Exclude this form from check
+        in: query
+        name: form_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers.SlugCheckResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Check slug availability
+      tags:
+      - Forms
+  /public/forms/{id}:
+    get:
+      description: Get a published form by ID or slug (public access)
+      parameters:
+      - description: Form ID or slug
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/formera_internal_models.Form'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Get public form
+      tags:
+      - Public
+  /public/forms/{id}/submit:
+    post:
+      consumes:
+      - application/json
+      description: Submit a response to a published form
+      parameters:
+      - description: Form ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Submission data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.SubmitRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/formera_internal_models.Submission'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Form closed or max submissions reached
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "429":
+          description: Rate limit exceeded
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Submit form
+      tags:
+      - Public
+  /public/forms/{id}/verify-password:
+    post:
+      consumes:
+      - application/json
+      description: Verify password for a password-protected form
+      parameters:
+      - description: Form ID or slug
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Password
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.VerifyPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns form if password is valid
+          schema:
+            $ref: '#/definitions/formera_internal_models.Form'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Verify form password
+      tags:
+      - Public
+  /public/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a file (for form submissions)
+      parameters:
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/formera_internal_storage.UploadResult'
+        "400":
+          description: Invalid file
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "429":
+          description: Rate limit exceeded
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Upload file
+      tags:
+      - Uploads
+  /settings:
+    get:
+      description: Get application settings (admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/formera_internal_models.Settings'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Admin access required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get settings
+      tags:
+      - Settings
+    put:
+      consumes:
+      - application/json
+      description: Update application settings (admin only)
+      parameters:
+      - description: Settings data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.UpdateSettingsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/formera_internal_models.Settings'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Admin access required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update settings
+      tags:
+      - Settings
+  /setup/complete:
+    post:
+      consumes:
+      - application/json
+      description: Create the first admin user and complete setup
+      parameters:
+      - description: Setup data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.SetupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers.AuthResponse'
+        "400":
+          description: Setup already completed or invalid data
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: Complete initial setup
+      tags:
+      - Setup
+  /setup/status:
+    get:
+      description: Get application setup status and public settings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers.SetupStatusResponse'
+      summary: Get setup status
+      tags:
+      - Setup
+  /uploads/{id}:
+    delete:
+      description: Delete an uploaded file
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete file
+      tags:
+      - Uploads
+  /uploads/image:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload an image file (for form design backgrounds)
+      parameters:
+      - description: Image file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/formera_internal_storage.UploadResult'
+        "400":
+          description: Invalid file
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "429":
+          description: Rate limit exceeded
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload image
+      tags:
+      - Uploads
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

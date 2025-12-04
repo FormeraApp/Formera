@@ -114,6 +114,61 @@ func (s *LocalStorage) GetURLByPath(path string) (string, error) {
 	return fmt.Sprintf("%s/%s", s.baseURL, path), nil
 }
 
+// GetFileByPath retrieves a file's content from local storage for streaming
+func (s *LocalStorage) GetFileByPath(path string) (*FileContent, error) {
+	fullPath := filepath.Join(s.basePath, path)
+
+	// Check if file exists and get info
+	info, err := os.Stat(fullPath)
+	if os.IsNotExist(err) {
+		return nil, ErrFileNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Open the file
+	file, err := os.Open(fullPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Detect content type from extension
+	contentType := detectContentTypeFromPath(path)
+
+	return &FileContent{
+		Reader:      file,
+		ContentType: contentType,
+		Size:        info.Size(),
+	}, nil
+}
+
+// detectContentTypeFromPath returns MIME type based on file extension
+func detectContentTypeFromPath(path string) string {
+	ext := filepath.Ext(path)
+	types := map[string]string{
+		".jpg":  "image/jpeg",
+		".jpeg": "image/jpeg",
+		".png":  "image/png",
+		".gif":  "image/gif",
+		".webp": "image/webp",
+		".svg":  "image/svg+xml",
+		".pdf":  "application/pdf",
+		".txt":  "text/plain",
+		".csv":  "text/csv",
+		".json": "application/json",
+		".doc":  "application/msword",
+		".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+		".xls":  "application/vnd.ms-excel",
+		".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+	}
+
+	if ct, ok := types[ext]; ok {
+		return ct
+	}
+	return "application/octet-stream"
+}
+
 // GetURL returns the URL for accessing a file
 func (s *LocalStorage) GetURL(fileID string) (string, error) {
 	// For local storage, we need to find the file

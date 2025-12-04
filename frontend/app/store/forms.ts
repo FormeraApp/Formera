@@ -25,8 +25,8 @@ export const useFormsStore = defineStore("forms", () => {
 
 		isLoading.value = true;
 		try {
-			const data = await formsApi.list();
-			forms.value = data || [];
+			const response = await formsApi.list({ pageSize: 100 });
+			forms.value = response.data || [];
 			lastFetched.value = Date.now();
 			return forms.value;
 		} catch (error) {

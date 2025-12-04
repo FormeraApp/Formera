@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strings"
 
-	"formera/internal/database"
 	"formera/internal/models"
 
 	"github.com/gin-gonic/gin"
@@ -14,6 +13,7 @@ import (
 type Claims struct {
 	UserID string `json:"user_id"`
 	Email  string `json:"email"`
+	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -48,34 +48,28 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 
 		c.Set("user_id", claims.UserID)
 		c.Set("email", claims.Email)
+		c.Set("user_role", claims.Role)
 		c.Next()
 	}
 }
 
 // AdminMiddleware checks if the authenticated user has admin role
+// Uses the role from JWT claims instead of querying the database
 func AdminMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID := c.GetString("user_id")
-		if userID == "" {
+		role := c.GetString("user_role")
+		if role == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
 			c.Abort()
 			return
 		}
 
-		var user models.User
-		if result := database.DB.First(&user, "id = ?", userID); result.Error != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
-			c.Abort()
-			return
-		}
-
-		if user.Role != models.RoleAdmin {
+		if role != string(models.RoleAdmin) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
 			c.Abort()
 			return
 		}
 
-		c.Set("user_role", string(user.Role))
 		c.Next()
 	}
 }

@@ -5,6 +5,7 @@ import (
 
 	"formera/internal/database"
 	"formera/internal/models"
+	"formera/internal/pagination"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,13 +31,20 @@ type UpdateUserRequest struct {
 }
 
 func (h *UserHandler) List(c *gin.Context) {
+	params := pagination.GetParams(c)
+
+	var totalItems int64
+	database.DB.Model(&models.User{}).Count(&totalItems)
+
 	var users []models.User
-	if result := database.DB.Find(&users); result.Error != nil {
+	if result := database.DB.Order("created_at DESC").
+		Scopes(pagination.Paginate(params)).
+		Find(&users); result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
 		return
 	}
 
-	c.JSON(http.StatusOK, users)
+	c.JSON(http.StatusOK, pagination.CreateResult(users, params, totalItems))
 }
 
 func (h *UserHandler) Get(c *gin.Context) {
@@ -174,8 +182,42 @@ func (h *UserHandler) Delete(c *gin.Context) {
 		}
 	}
 
-	if result := database.DB.Delete(&user); result.Error != nil {
+	// Use transaction to delete user and all their data
+	tx := database.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
+		return
+	}
+
+	// Get all forms by this user
+	var formIDs []string
+	tx.Model(&models.Form{}).Where("user_id = ?", id).Pluck("id", &formIDs)
+
+	// Delete all submissions for user's forms
+	if len(formIDs) > 0 {
+		if result := tx.Where("form_id IN ?", formIDs).Delete(&models.Submission{}); result.Error != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete submissions"})
+			return
+		}
+	}
+
+	// Delete all forms by this user
+	if result := tx.Where("user_id = ?", id).Delete(&models.Form{}); result.Error != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete forms"})
+		return
+	}
+
+	// Delete the user
+	if result := tx.Delete(&user); result.Error != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
 		return
 	}
 

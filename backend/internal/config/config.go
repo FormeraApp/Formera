@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -36,6 +37,14 @@ type Config struct {
 	DBPath     string
 	JWTSecret  string
 	CorsOrigin string
+
+	// Logging configuration
+	LogLevel  string // debug, info, warn, error
+	LogPretty bool   // Human-readable output (for development)
+
+	// Proxy configuration
+	TrustedProxies  []string // List of trusted proxy IPs/CIDRs (empty = trust all)
+	RealIPHeader    string   // Custom header for client IP (e.g., "CF-Connecting-IP", "X-Real-IP")
 
 	// Storage configuration
 	Storage StorageConfig
@@ -108,12 +117,16 @@ func Load() *Config {
 		corsOrigin = baseURL
 	}
 	return &Config{
-		Port:       port,
-		BaseURL:    baseURL,
-		ApiURL:     apiURL,
-		DBPath:     getEnv("DB_PATH", "./data/formera.db"),
-		JWTSecret:  getEnv("JWT_SECRET", "change-me-in-production-please"),
-		CorsOrigin: corsOrigin,
+		Port:           port,
+		BaseURL:        baseURL,
+		ApiURL:         apiURL,
+		DBPath:         getEnv("DB_PATH", "./data/formera.db"),
+		JWTSecret:      getEnv("JWT_SECRET", "change-me-in-production-please"),
+		CorsOrigin:     corsOrigin,
+		LogLevel:       getEnv("LOG_LEVEL", "info"),
+		LogPretty:      getEnv("LOG_PRETTY", "true") == "true",
+		TrustedProxies: parseTrustedProxies(getEnv("TRUSTED_PROXIES", "")),
+		RealIPHeader:   getEnv("REAL_IP_HEADER", ""),
 
 		Storage: StorageConfig{
 			Type: getEnv("STORAGE_TYPE", ""), // auto-detect if empty
@@ -150,4 +163,19 @@ func getEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+// parseTrustedProxies parses a comma-separated list of trusted proxy IPs/CIDRs
+func parseTrustedProxies(value string) []string {
+	if value == "" {
+		return nil // nil = trust all proxies (default for backwards compatibility)
+	}
+	var proxies []string
+	for _, p := range strings.Split(value, ",") {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			proxies = append(proxies, p)
+		}
+	}
+	return proxies
 }

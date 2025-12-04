@@ -65,7 +65,13 @@ export const useApi = () => {
 	};
 
 	const formsApi = {
-		list: (): Promise<Form[]> => request("/forms"),
+		list: (params?: PaginationParams): Promise<PaginatedResponse<Form[]>> => {
+			const searchParams = new URLSearchParams();
+			if (params?.page) searchParams.append("page", params.page.toString());
+			if (params?.pageSize) searchParams.append("page_size", params.pageSize.toString());
+			const query = searchParams.toString();
+			return request(`/forms${query ? `?${query}` : ""}`);
+		},
 		get: (id: string): Promise<Form> => request(`/forms/${id}`),
 		getPublic: (id: string): Promise<Form> => request(`/public/forms/${id}`),
 		create: (form: Partial<Form>): Promise<Form> =>
@@ -104,7 +110,13 @@ export const useApi = () => {
 				method: "POST",
 				body: JSON.stringify({ data: formData, metadata }),
 			}),
-		list: (formId: string): Promise<SubmissionsResponse> => request(`/forms/${formId}/submissions`),
+		list: (formId: string, params?: PaginationParams): Promise<SubmissionsResponse> => {
+			const searchParams = new URLSearchParams();
+			if (params?.page) searchParams.append("page", params.page.toString());
+			if (params?.pageSize) searchParams.append("page_size", params.pageSize.toString());
+			const query = searchParams.toString();
+			return request(`/forms/${formId}/submissions${query ? `?${query}` : ""}`);
+		},
 		get: (formId: string, submissionId: string): Promise<Submission> => request(`/forms/${formId}/submissions/${submissionId}`),
 		delete: (formId: string, submissionId: string): Promise<void> =>
 			request(`/forms/${formId}/submissions/${submissionId}`, {
@@ -140,7 +152,13 @@ export const useApi = () => {
 	};
 
 	const usersApi = {
-		list: (): Promise<User[]> => request("/users"),
+		list: (params?: PaginationParams): Promise<PaginatedResponse<User[]>> => {
+			const searchParams = new URLSearchParams();
+			if (params?.page) searchParams.append("page", params.page.toString());
+			if (params?.pageSize) searchParams.append("page_size", params.pageSize.toString());
+			const query = searchParams.toString();
+			return request(`/users${query ? `?${query}` : ""}`);
+		},
 		get: (id: string): Promise<User> => request(`/users/${id}`),
 		create: (user: { email: string; password: string; name: string; role?: UserRole }): Promise<User> =>
 			request("/users", {

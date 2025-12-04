@@ -33,6 +33,13 @@ type UploadResult struct {
 	MimeType string `json:"mimeType"`
 }
 
+// FileContent represents the content of a file for streaming
+type FileContent struct {
+	Reader      io.ReadCloser
+	ContentType string
+	Size        int64
+}
+
 // Storage defines the interface for file storage backends
 type Storage interface {
 	// Upload stores a file and returns the result
@@ -43,6 +50,9 @@ type Storage interface {
 
 	// GetURLByPath returns the URL for accessing a file by its relative path
 	GetURLByPath(path string) (string, error)
+
+	// GetFileByPath retrieves a file's content for streaming/proxying
+	GetFileByPath(path string) (*FileContent, error)
 
 	// Delete removes a file from storage
 	Delete(fileID string) error
