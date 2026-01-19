@@ -298,6 +298,7 @@
 			"deleteField": "Delete field"
 		},
 		"fieldSettings": {
+			"fieldType": "Field Type",
 			"label": "Label",
 			"helpText": "Help text",
 			"helpTextPlaceholder": "Optional hint for users",
