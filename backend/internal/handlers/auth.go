@@ -205,7 +205,7 @@ func (h *AuthHandler) generateToken(user *models.User) (string, error) {
 		Email:  user.Email,
 		Role:   string(user.Role),
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * 7 * time.Hour)), // 7 days
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // 24 hours
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
