@@ -84,7 +84,7 @@ func (h *FormHandler) Create(c *gin.Context) {
 
 	form := &models.Form{
 		UserID:      userID,
-		Title:       pkg.StripHTML(req.Title),
+		Title:       pkg.StripHTMLPreserveEntities(req.Title),
 		Description: pkg.SanitizeHTML(req.Description),
 		Fields:      req.Fields,
 		Settings:    req.Settings,
@@ -321,7 +321,7 @@ func (h *FormHandler) Update(c *gin.Context) {
 	}
 
 	if req.Title != "" {
-		form.Title = pkg.StripHTML(req.Title)
+		form.Title = pkg.StripHTMLPreserveEntities(req.Title)
 	}
 	if req.Description != "" {
 		form.Description = pkg.SanitizeHTML(req.Description)
