@@ -217,9 +217,15 @@ func (h *UploadHandler) UploadFile(c *gin.Context) {
 		contentType = detectContentType(header.Filename)
 	}
 
-	// Validate file size only - file type validation is done on the frontend
-	// based on form field settings configured by the form creator
-	if err := storage.ValidateFileSize(header.Size); err != nil {
+	// Validate file type and size for security
+	// Backend validation ensures malicious files can't bypass frontend checks
+	if err := storage.ValidateFileUpload(contentType, header.Size); err != nil {
+		if err == storage.ErrInvalidFileType {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "File type not allowed. Allowed types: images, PDF, text, CSV, Word, Excel",
+			})
+			return
+		}
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Sprintf("File too large. Maximum size: %d MB", storage.MaxFileSize/(1024*1024)),
 		})
