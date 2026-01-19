@@ -154,7 +154,7 @@ func TestAdminMiddleware_AdminUser(t *testing.T) {
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
 		c.Set("user_id", "admin-123")
-		c.Set("user_role", string(models.RoleAdmin))
+		c.Set("role", string(models.RoleAdmin))
 		c.Next()
 	})
 	router.Use(AdminMiddleware())
@@ -176,7 +176,7 @@ func TestAdminMiddleware_NonAdminUser(t *testing.T) {
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
 		c.Set("user_id", "user-123")
-		c.Set("user_role", string(models.RoleUser))
+		c.Set("role", string(models.RoleUser))
 		c.Next()
 	})
 	router.Use(AdminMiddleware())
@@ -196,7 +196,7 @@ func TestAdminMiddleware_NonAdminUser(t *testing.T) {
 
 func TestAdminMiddleware_NoRole(t *testing.T) {
 	router := gin.New()
-	// No user_role set in context
+	// No role set in context
 	router.Use(AdminMiddleware())
 	router.GET("/admin", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{})
