@@ -24,6 +24,42 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Forms     []Form    `json:"forms,omitempty" gorm:"foreignKey:UserID"`
+
+	// Account lockout fields
+	FailedLoginAttempts int        `json:"-" gorm:"default:0"`
+	LockedUntil         *time.Time `json:"-"`
+}
+
+// MaxLoginAttempts is the number of failed attempts before lockout
+const MaxLoginAttempts = 5
+
+// LockoutDuration is how long the account is locked after max attempts
+const LockoutDuration = 15 * time.Minute
+
+// IsLocked returns true if the account is currently locked
+func (u *User) IsLocked() bool {
+	if u.LockedUntil == nil {
+		return false
+	}
+	if time.Now().After(*u.LockedUntil) {
+		return false
+	}
+	return true
+}
+
+// IncrementFailedAttempts increments the failed login counter and locks if needed
+func (u *User) IncrementFailedAttempts() {
+	u.FailedLoginAttempts++
+	if u.FailedLoginAttempts >= MaxLoginAttempts {
+		lockTime := time.Now().Add(LockoutDuration)
+		u.LockedUntil = &lockTime
+	}
+}
+
+// ResetFailedAttempts resets the failed login counter after successful login
+func (u *User) ResetFailedAttempts() {
+	u.FailedLoginAttempts = 0
+	u.LockedUntil = nil
 }
 
 func (u *User) IsAdmin() bool {

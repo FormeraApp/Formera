@@ -8,8 +8,7 @@ import (
 	"testing"
 
 	"formera/internal/models"
-	"formera/internal/pagination"
-	"formera/internal/testutil"
+	"formera/internal/pkg"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,7 +18,7 @@ func init() {
 }
 
 func TestFormHandler_Create(t *testing.T) {
-	testutil.SetupTestDB(t)
+	pkg.SetupTestDB(t)
 
 	handler := NewFormHandler()
 	router := gin.New()
@@ -60,7 +59,7 @@ func TestFormHandler_Create(t *testing.T) {
 }
 
 func TestFormHandler_Create_SanitizesXSS(t *testing.T) {
-	testutil.SetupTestDB(t)
+	pkg.SetupTestDB(t)
 
 	handler := NewFormHandler()
 	router := gin.New()
@@ -103,8 +102,8 @@ func TestFormHandler_Create_SanitizesXSS(t *testing.T) {
 }
 
 func TestFormHandler_List(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	// Create test forms
 	form1 := &models.Form{UserID: user.ID, Title: "Form 1", Status: models.FormStatusDraft}
@@ -128,7 +127,7 @@ func TestFormHandler_List(t *testing.T) {
 		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
 	}
 
-	var response pagination.Result
+	var response pkg.PaginationResult
 	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
 		t.Fatalf("failed to unmarshal response: %v", err)
 	}
@@ -139,8 +138,8 @@ func TestFormHandler_List(t *testing.T) {
 }
 
 func TestFormHandler_List_Pagination(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	// Create 25 test forms
 	for i := 0; i < 25; i++ {
@@ -160,7 +159,7 @@ func TestFormHandler_List_Pagination(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	var response pagination.Result
+	var response pkg.PaginationResult
 	json.Unmarshal(w.Body.Bytes(), &response)
 
 	if response.TotalItems != 25 {
@@ -175,8 +174,8 @@ func TestFormHandler_List_Pagination(t *testing.T) {
 }
 
 func TestFormHandler_Get(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{UserID: user.ID, Title: "Test Form", Status: models.FormStatusDraft}
 	db.Create(form)
@@ -208,8 +207,8 @@ func TestFormHandler_Get(t *testing.T) {
 }
 
 func TestFormHandler_Get_NotFound(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	handler := NewFormHandler()
 	router := gin.New()
@@ -229,9 +228,9 @@ func TestFormHandler_Get_NotFound(t *testing.T) {
 }
 
 func TestFormHandler_Get_WrongUser(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	owner := testutil.CreateTestUser(t, db, "owner@example.com", "password123", models.RoleUser)
-	otherUser := testutil.CreateTestUser(t, db, "other@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	owner := pkg.CreateTestUser(t, db, "owner@example.com", "password123", models.RoleUser)
+	otherUser := pkg.CreateTestUser(t, db, "other@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{UserID: owner.ID, Title: "Test Form", Status: models.FormStatusDraft}
 	db.Create(form)
@@ -254,8 +253,8 @@ func TestFormHandler_Get_WrongUser(t *testing.T) {
 }
 
 func TestFormHandler_Update(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{UserID: user.ID, Title: "Original Title", Status: models.FormStatusDraft}
 	db.Create(form)
@@ -297,8 +296,8 @@ func TestFormHandler_Update(t *testing.T) {
 }
 
 func TestFormHandler_Delete(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{UserID: user.ID, Title: "Test Form", Status: models.FormStatusDraft}
 	db.Create(form)
@@ -339,8 +338,8 @@ func TestFormHandler_Delete(t *testing.T) {
 }
 
 func TestFormHandler_Duplicate(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{
 		UserID:      user.ID,
@@ -383,8 +382,8 @@ func TestFormHandler_Duplicate(t *testing.T) {
 }
 
 func TestFormHandler_GetPublic(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{
 		UserID: user.ID,
@@ -418,8 +417,8 @@ func TestFormHandler_GetPublic(t *testing.T) {
 }
 
 func TestFormHandler_GetPublic_Draft(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	form := &models.Form{
 		UserID: user.ID,
@@ -438,5 +437,60 @@ func TestFormHandler_GetPublic_Draft(t *testing.T) {
 
 	if w.Code != http.StatusNotFound {
 		t.Errorf("expected status %d for draft form, got %d", http.StatusNotFound, w.Code)
+	}
+}
+
+func TestFormHandler_GetPublic_IncrementsViewCount(t *testing.T) {
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+
+	form := &models.Form{
+		UserID:    user.ID,
+		Title:     "Public Form",
+		Status:    models.FormStatusPublished,
+		ViewCount: 0,
+	}
+	db.Create(form)
+
+	handler := NewFormHandler()
+	router := gin.New()
+	router.GET("/public/forms/:id", handler.GetPublic)
+
+	// First request
+	req := httptest.NewRequest(http.MethodGet, "/public/forms/"+form.ID, nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	var response models.Form
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if response.ViewCount != 1 {
+		t.Errorf("expected view_count 1, got %d", response.ViewCount)
+	}
+
+	// Second request
+	req = httptest.NewRequest(http.MethodGet, "/public/forms/"+form.ID, nil)
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if response.ViewCount != 2 {
+		t.Errorf("expected view_count 2, got %d", response.ViewCount)
+	}
+
+	// Verify in database
+	var dbForm models.Form
+	db.First(&dbForm, "id = ?", form.ID)
+	if dbForm.ViewCount != 2 {
+		t.Errorf("expected view_count 2 in database, got %d", dbForm.ViewCount)
 	}
 }

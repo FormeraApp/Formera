@@ -42,8 +42,12 @@ type FileContent struct {
 
 // Storage defines the interface for file storage backends
 type Storage interface {
-	// Upload stores a file and returns the result
+	// Upload stores a file and returns the result (images go to images/, files go to files/)
 	Upload(filename string, contentType string, size int64, reader io.Reader) (*UploadResult, error)
+
+	// UploadToFiles stores a file always in the files/ directory (for form submissions)
+	// This ensures submission files are always protected, even if they are images
+	UploadToFiles(filename string, contentType string, size int64, reader io.Reader) (*UploadResult, error)
 
 	// GetURL returns the URL for accessing a file by ID (searches for file)
 	GetURL(fileID string) (string, error)
@@ -109,6 +113,15 @@ func ValidateFileUpload(contentType string, size int64) error {
 	if !AllowedFileTypes[contentType] {
 		return ErrInvalidFileType
 	}
+	if size > MaxFileSize {
+		return ErrFileTooLarge
+	}
+	return nil
+}
+
+// ValidateFileSize checks only the file size (used for public uploads where
+// file type validation is done on the frontend based on form settings)
+func ValidateFileSize(size int64) error {
 	if size > MaxFileSize {
 		return ErrFileTooLarge
 	}

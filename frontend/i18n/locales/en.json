@@ -258,7 +258,9 @@
 				"responses": "Responses",
 				"answersCount": "{count} responses",
 				"more": "+{count} more",
-				"empty": "(Empty)"
+				"empty": "(Empty)",
+				"views": "Views",
+				"conversionRate": "Conversion Rate"
 			},
 			"individual": {
 				"of": "of",
@@ -296,6 +298,7 @@
 			"deleteField": "Delete field"
 		},
 		"fieldSettings": {
+			"fieldType": "Field Type",
 			"label": "Label",
 			"helpText": "Help text",
 			"helpTextPlaceholder": "Optional hint for users",
@@ -530,8 +533,10 @@
 		"selectFiles": "Select files",
 		"uploadFailed": "Upload failed",
 		"fileTooLarge": "File \"{name}\" is too large. Maximum: {max} MB",
+		"invalidType": "File \"{name}\" has an invalid file type",
 		"remove": "Remove",
-		"maxSize": "Max. {size} MB"
+		"maxSize": "Max. {size} MB",
+		"uploadOnSubmit": "Will be uploaded when you submit"
 	},
 	"fields": {
 		"text": {

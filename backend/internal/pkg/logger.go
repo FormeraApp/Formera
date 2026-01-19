@@ -1,4 +1,4 @@
-package logger
+package pkg
 
 import (
 	"io"
@@ -11,15 +11,15 @@ import (
 
 var Log zerolog.Logger
 
-// Config holds logger configuration
-type Config struct {
+// LoggerConfig holds logger configuration
+type LoggerConfig struct {
 	Level      string // debug, info, warn, error
 	Pretty     bool   // Human-readable output (for development)
 	TimeFormat string // Time format
 }
 
-// Initialize sets up the global logger
-func Initialize(cfg Config) {
+// InitializeLogger sets up the global logger
+func InitializeLogger(cfg LoggerConfig) {
 	var output io.Writer = os.Stdout
 
 	if cfg.Pretty {
@@ -105,23 +105,23 @@ func GinRecovery() gin.HandlerFunc {
 
 // Helper functions for common logging patterns
 
-func Debug() *zerolog.Event {
+func LogDebug() *zerolog.Event {
 	return Log.Debug()
 }
 
-func Info() *zerolog.Event {
+func LogInfo() *zerolog.Event {
 	return Log.Info()
 }
 
-func Warn() *zerolog.Event {
+func LogWarn() *zerolog.Event {
 	return Log.Warn()
 }
 
-func Error() *zerolog.Event {
+func LogError() *zerolog.Event {
 	return Log.Error()
 }
 
-func Fatal() *zerolog.Event {
+func LogFatal() *zerolog.Event {
 	return Log.Fatal()
 }
 

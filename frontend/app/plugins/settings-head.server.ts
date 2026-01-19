@@ -1,12 +1,14 @@
 const getServerFileUrl = (pathOrUrl: string, apiUrl: string): string => {
 	if (!pathOrUrl) return "";
 
-	if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://") || pathOrUrl.startsWith("/")) {
+	// Already a full URL or data URL
+	if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://") || pathOrUrl.startsWith("data:")) {
 		return pathOrUrl;
 	}
 
+	// Use /uploads/ endpoint for public files (images/, logos, favicons)
 	const cleanPath = pathOrUrl.startsWith("/") ? pathOrUrl.slice(1) : pathOrUrl;
-	return `${apiUrl}/files/${cleanPath}`;
+	return `${apiUrl}/uploads/${cleanPath}`;
 };
 
 export default defineNuxtPlugin(async () => {
@@ -97,7 +99,7 @@ export default defineNuxtPlugin(async () => {
 			// Inline script to apply system theme before paint (prevents flash)
 			...(themeScript ? [{ innerHTML: themeScript, tagPosition: "head" as const }] : []),
 			{
-				src: "https://kit.fontawesome.com/b0b0028fa2.js",
+				src: "https://kit.fontawesome.com/1cc2fe2725.js",
 				crossorigin: "anonymous",
 			},
 		],

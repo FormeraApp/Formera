@@ -123,13 +123,41 @@ export const useApi = () => {
 				method: "DELETE",
 			}),
 		stats: (formId: string): Promise<FormStats> => request(`/forms/${formId}/stats`),
-		exportCSV: (formId: string): string => {
+		exportCSV: async (formId: string): Promise<void> => {
 			const token = getToken();
-			return `${apiBase}/forms/${formId}/export/csv?token=${token}`;
+			const response = await fetch(`${apiBase}/forms/${formId}/export/csv`, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			});
+			if (!response.ok) throw new Error("Export failed");
+			const blob = await response.blob();
+			const url = window.URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = `submissions-${formId}.csv`;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			window.URL.revokeObjectURL(url);
 		},
-		exportJSON: (formId: string): string => {
+		exportJSON: async (formId: string): Promise<void> => {
 			const token = getToken();
-			return `${apiBase}/forms/${formId}/export/json?token=${token}`;
+			const response = await fetch(`${apiBase}/forms/${formId}/export/json`, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			});
+			if (!response.ok) throw new Error("Export failed");
+			const blob = await response.blob();
+			const url = window.URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = `submissions-${formId}.json`;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			window.URL.revokeObjectURL(url);
 		},
 	};
 
@@ -176,6 +204,14 @@ export const useApi = () => {
 			}),
 	};
 
+	const filesApi = {
+		generateShareUrl: (path: string, durationMinutes?: number): Promise<{ url: string; expires_at: string }> =>
+			request("/files/share", {
+				method: "POST",
+				body: JSON.stringify({ path, duration_minutes: durationMinutes || 60 }),
+			}),
+	};
+
 	const uploadApi = {
 		uploadImage: async (file: File): Promise<UploadResult> => {
 			const token = getToken();
@@ -206,31 +242,6 @@ export const useApi = () => {
 
 			return response.json();
 		},
-		uploadFile: async (file: File): Promise<UploadResult> => {
-			const token = getToken();
-			const formData = new FormData();
-			formData.append("file", file);
-
-			let response: Response;
-			try {
-				response = await fetch(`${apiBase}/uploads/file`, {
-					method: "POST",
-					headers: {
-						...(token ? { Authorization: `Bearer ${token}` } : {}),
-					},
-					body: formData,
-				});
-			} catch (networkError) {
-				throw new Error("Network error - could not upload file");
-			}
-
-			if (!response.ok) {
-				const error = await response.json().catch(() => ({ error: "Upload failed" }));
-				throw new Error(error.error || `Upload failed (${response.status})`);
-			}
-
-			return response.json();
-		},
 		delete: (fileId: string): Promise<void> =>
 			request(`/uploads/${fileId}`, {
 				method: "DELETE",
@@ -244,6 +255,7 @@ export const useApi = () => {
 		setupApi,
 		settingsApi,
 		usersApi,
+		filesApi,
 		uploadApi,
 	};
 };

@@ -5,7 +5,7 @@ import (
 
 	"formera/internal/database"
 	"formera/internal/models"
-	"formera/internal/pagination"
+	"formera/internal/pkg"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,20 +31,20 @@ type UpdateUserRequest struct {
 }
 
 func (h *UserHandler) List(c *gin.Context) {
-	params := pagination.GetParams(c)
+	params := pkg.GetPaginationParams(c)
 
 	var totalItems int64
 	database.DB.Model(&models.User{}).Count(&totalItems)
 
 	var users []models.User
 	if result := database.DB.Order("created_at DESC").
-		Scopes(pagination.Paginate(params)).
+		Scopes(pkg.Paginate(params)).
 		Find(&users); result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
 		return
 	}
 
-	c.JSON(http.StatusOK, pagination.CreateResult(users, params, totalItems))
+	c.JSON(http.StatusOK, pkg.CreatePaginationResult(users, params, totalItems))
 }
 
 func (h *UserHandler) Get(c *gin.Context) {

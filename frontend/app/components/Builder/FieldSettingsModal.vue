@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+const { t } = useI18n();
+
 const props = defineProps<{
 	open?: boolean;
 	field?: FormField | null;
@@ -7,6 +9,61 @@ const props = defineProps<{
 const emit = defineEmits(["update:open", "update:field"]);
 
 const fieldMeta = computed(() => (props.field ? FIELD_META[props.field.type] : null));
+
+// Define compatible field type groups - types within a group can be converted to each other
+const fieldTypeGroups: Record<string, FieldType[]> = {
+	text: ["text", "textarea", "email", "phone", "url"],
+	choice: ["select", "radio", "checkbox", "dropdown"],
+	special: ["rating", "scale"],
+	layout_text: ["heading", "paragraph"],
+};
+
+// Get the group for the current field type
+const currentFieldGroup = computed(() => {
+	if (!props.field) return null;
+	for (const [group, types] of Object.entries(fieldTypeGroups)) {
+		if (types.includes(props.field.type)) {
+			return { name: group, types };
+		}
+	}
+	return null;
+});
+
+// Check if the field type can be changed
+const canChangeType = computed(() => {
+	return currentFieldGroup.value !== null && currentFieldGroup.value.types.length > 1;
+});
+
+// Get available types for the current field
+const availableTypes = computed(() => {
+	if (!currentFieldGroup.value) return [];
+	return currentFieldGroup.value.types;
+});
+
+// Handle field type change
+const handleTypeChange = (newType: FieldType) => {
+	if (!props.field || newType === props.field.type) return;
+
+	// Create the updated field with the new type
+	const updatedField: FormField = {
+		...props.field,
+		type: newType,
+	};
+
+	// Handle special conversions
+	// When changing to a choice type, ensure options exist
+	if (["select", "radio", "checkbox", "dropdown"].includes(newType) && !updatedField.options?.length) {
+		updatedField.options = ["Option 1", "Option 2", "Option 3"];
+	}
+
+	// When changing from rating/scale, preserve min/max values
+	if (["rating", "scale"].includes(newType)) {
+		if (!updatedField.minValue) updatedField.minValue = 1;
+		if (!updatedField.maxValue) updatedField.maxValue = newType === "rating" ? 5 : 10;
+	}
+
+	emit("update:field", updatedField);
+};
 
 const isLayoutField = computed(() => {
 	if (!props.field) return false;
@@ -91,6 +148,23 @@ const deleteOption = (index: number) => {
 				</div>
 
 				<div class="modal-body">
+					<!-- Field Type Selector -->
+					<div v-if="canChangeType" class="form-group">
+						<label class="label">{{ $t("builder.fieldSettings.fieldType") }}</label>
+						<div class="type-selector">
+							<button
+								v-for="fieldType in availableTypes"
+								:key="fieldType"
+								:class="['type-option', { 'type-option-active': field.type === fieldType }]"
+								type="button"
+								@click="handleTypeChange(fieldType)"
+							>
+								<UISysIcon :icon="FIELD_META[fieldType].icon" />
+								<span>{{ $t(`fields.${fieldType}.label`) }}</span>
+							</button>
+						</div>
+					</div>
+
 					<!-- Common: Label -->
 					<div v-if="!['divider', 'pagebreak'].includes(field.type)" class="form-group">
 						<label class="label">{{ $t("builder.fieldSettings.label") }}</label>
@@ -557,6 +631,44 @@ const deleteOption = (index: number) => {
 	margin: 0;
 	font-size: 0.75rem;
 	color: var(--text-secondary);
+}
+
+/* Type Selector */
+.type-selector {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.type-option {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem 0.75rem;
+	font-size: 0.8125rem;
+	color: var(--text-secondary);
+	background: var(--background);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.type-option:hover {
+	color: var(--text);
+	border-color: var(--primary-light);
+	background: var(--surface-hover);
+}
+
+.type-option-active {
+	color: var(--primary);
+	background: rgba(99, 102, 241, 0.1);
+	border-color: var(--primary);
+}
+
+.type-option-active:hover {
+	color: var(--primary);
+	border-color: var(--primary);
 }
 
 /* Validation Section */

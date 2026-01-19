@@ -1,8 +1,12 @@
 <script lang="ts" setup>
 const { t, locale } = useI18n();
 const route = useRoute();
-const { submissionsApi } = useApi();
+const { submissionsApi, filesApi } = useApi();
 const { sanitizeHtml } = useSanitize();
+
+// Cache for share URLs to avoid regenerating tokens for the same file
+// Using a reactive object instead of Map for better Vue reactivity
+const shareUrlCache = ref<Record<string, string>>({});
 
 const id = route.params.id as string;
 
@@ -51,10 +55,55 @@ const loadData = async (showLoading = true) => {
 		useHead({
 			title: t("forms.responses.title", { title: submissionsData.form.title }),
 		});
+
+		// Load share URLs for protected file fields (runs in background)
+		loadProtectedFileUrls();
 	} catch (error) {
 		console.error("Failed to load data:", error);
 	} finally {
 		isLoading.value = false;
+	}
+};
+
+// Load share URLs for protected files - defined here to be called from loadData
+const loadProtectedFileUrls = async () => {
+	// Wait for next tick to ensure formFields computed is ready
+	await nextTick();
+
+	const filePaths: string[] = [];
+	const fields = form.value?.fields?.filter((f) => f.type === "file") || [];
+
+	// Collect all protected file paths from submissions
+	for (const submission of submissions.value) {
+		for (const field of fields) {
+			const value = submission.data[field.id];
+			if (Array.isArray(value)) {
+				for (const v of value) {
+					if (typeof v === "string" && (v.startsWith("files/") || v.startsWith("/files/"))) {
+						filePaths.push(v);
+					}
+				}
+			} else if (typeof value === "string" && (value.startsWith("files/") || value.startsWith("/files/"))) {
+				filePaths.push(value);
+			}
+		}
+	}
+
+	// Generate share URLs for all unique paths
+	const uniquePaths = [...new Set(filePaths)];
+	if (uniquePaths.length > 0) {
+		// Generate share URLs inline
+		for (const path of uniquePaths) {
+			if (!(path in shareUrlCache.value)) {
+				try {
+					const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+					const result = await filesApi.generateShareUrl(cleanPath, 60);
+					shareUrlCache.value[path] = result.url;
+				} catch (error) {
+					console.error("Failed to generate share URL for:", path, error);
+				}
+			}
+		}
 	}
 };
 
@@ -79,7 +128,7 @@ const handleDelete = async (submissionId: string) => {
 };
 
 const handleExportCSV = () => {
-	window.open(submissionsApi.exportCSV(id), "_blank");
+	submissionsApi.exportCSV(id);
 };
 
 const getFieldType = (fieldId: string): string => {
@@ -128,20 +177,35 @@ const getField = (fieldId: string): FormField | undefined => {
 	return formFields.value.find((f) => f.id === fieldId);
 };
 
-const getFileUrls = (value: unknown): string[] => {
-	const isFilePath = (v: string) => v.startsWith("http") || v.startsWith("/uploads/") || v.startsWith("images/") || v.startsWith("files/");
+// File info object for display
+interface FileInfo {
+	url: string;
+	filename: string;
+	originalPath: string;
+	isImage: boolean;
+}
+
+const getFileInfos = (value: unknown): FileInfo[] => {
+	const processPath = (path: string): FileInfo => {
+		const cachedUrl = shareUrlCache.value[path];
+		const url = (isProtectedPath(path) && cachedUrl) ? cachedUrl : getFileUrl(path);
+		return {
+			url,
+			filename: extractFilename(path, t("forms.responses.individual.file")),
+			originalPath: path,
+			isImage: isImageFile(path),
+		};
+	};
 
 	if (Array.isArray(value)) {
-		return value.filter((v) => typeof v === "string" && isFilePath(v)).map((v) => getFileUrl(v));
+		return value
+			.filter((v) => typeof v === "string" && isFilePath(v))
+			.map((v) => processPath(v));
 	}
 	if (typeof value === "string" && isFilePath(value)) {
-		return [getFileUrl(value)];
+		return [processPath(value)];
 	}
 	return [];
-};
-
-const getFileName = (url: string): string => {
-	return url.split("/").pop() || t("forms.responses.individual.file");
 };
 
 const formatDate = (dateString: string) => {
@@ -252,7 +316,7 @@ onMounted(() => {
 						<span>{{ $t("forms.responses.backToForms") }}</span>
 					</NuxtLink>
 					<div class="header-actions">
-						<button class="icon-btn" :title="$t('forms.responses.refresh')" @click="loadData">
+						<button class="icon-btn" :title="$t('forms.responses.refresh')" @click="() => loadData()">
 							<UISysIcon icon="fa-solid fa-arrows-rotate" />
 						</button>
 						<button class="export-btn" @click="handleExportCSV">
@@ -298,6 +362,14 @@ onMounted(() => {
 						<span class="summary-stat-value">{{ pagination.state.totalItems }}</span>
 						<span class="summary-stat-label">{{ $t("forms.responses.summary.responses") }}</span>
 					</div>
+					<div class="summary-stat">
+						<span class="summary-stat-value">{{ stats?.total_views || 0 }}</span>
+						<span class="summary-stat-label">{{ $t("forms.responses.summary.views") }}</span>
+					</div>
+					<div class="summary-stat">
+						<span class="summary-stat-value">{{ (stats?.conversion_rate || 0).toFixed(1) }}%</span>
+						<span class="summary-stat-label">{{ $t("forms.responses.summary.conversionRate") }}</span>
+					</div>
 				</div>
 
 				<div v-for="field in formFields" :key="field.id" class="summary-card">
@@ -331,19 +403,19 @@ onMounted(() => {
 									:key="submission.id"
 									class="summary-file-item"
 								>
-									<template v-if="getFileUrls(submission.data[field.id]).length > 0">
-										<template v-for="url in getFileUrls(submission.data[field.id]).slice(0, 2)" :key="url">
+									<template v-if="getFileInfos(submission.data[field.id]).length > 0">
+										<template v-for="file in getFileInfos(submission.data[field.id]).slice(0, 2)" :key="file.originalPath">
 											<!-- Image preview for image files -->
-											<div v-if="url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)" class="file-image-preview">
-												<img :src="url" :alt="getFileName(url)" />
-												<a :href="url" target="_blank" class="file-image-overlay">
+											<div v-if="file.isImage" class="file-image-preview">
+												<img :src="file.url" :alt="file.filename" />
+												<a :href="file.url" target="_blank" class="file-image-overlay">
 													<UISysIcon icon="fa-solid fa-expand" />
 												</a>
 											</div>
 											<!-- Regular file link -->
-											<a v-else :href="url" target="_blank" class="file-link">
+											<a v-else :href="file.url" target="_blank" class="file-link">
 												<UISysIcon icon="fa-solid fa-file" />
-												{{ getFileName(url) }}
+												{{ file.filename }}
 											</a>
 										</template>
 									</template>
@@ -520,19 +592,19 @@ onMounted(() => {
 										</template>
 										<!-- File -->
 										<template v-else-if="isFileField(selectedFieldId!)">
-											<div v-if="getFileUrls(group.value).length > 0" class="answer-files">
-												<template v-for="url in getFileUrls(group.value)" :key="url">
+											<div v-if="getFileInfos(group.value).length > 0" class="answer-files">
+												<template v-for="file in getFileInfos(group.value)" :key="file.originalPath">
 													<!-- Image preview -->
-													<div v-if="url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)" class="file-image-preview">
-														<img :src="url" :alt="getFileName(url)" />
-														<a :href="url" target="_blank" class="file-image-overlay">
+													<div v-if="file.isImage" class="file-image-preview">
+														<img :src="file.url" :alt="file.filename" />
+														<a :href="file.url" target="_blank" class="file-image-overlay">
 															<UISysIcon icon="fa-solid fa-expand" />
 														</a>
 													</div>
 													<!-- Regular file -->
-													<a v-else :href="url" target="_blank" class="file-link">
+													<a v-else :href="file.url" target="_blank" class="file-link">
 														<UISysIcon icon="fa-solid fa-file" />
-														{{ getFileName(url) }}
+														{{ file.filename }}
 													</a>
 												</template>
 											</div>
@@ -677,20 +749,20 @@ onMounted(() => {
 
 							<!-- File -->
 							<template v-else-if="isFileField(field.id)">
-								<div v-if="getFileUrls(currentSubmission.data[field.id]).length > 0" class="file-list">
-									<template v-for="url in getFileUrls(currentSubmission.data[field.id])" :key="url">
+								<div v-if="getFileInfos(currentSubmission.data[field.id]).length > 0" class="file-list">
+									<template v-for="file in getFileInfos(currentSubmission.data[field.id])" :key="file.originalPath">
 										<!-- Image preview -->
-										<div v-if="url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)" class="file-image-large">
-											<img :src="url" :alt="getFileName(url)" />
-											<a :href="url" target="_blank" class="file-download-btn">
+										<div v-if="file.isImage" class="file-image-large">
+											<img :src="file.url" :alt="file.filename" />
+											<a :href="file.url" target="_blank" class="file-download-btn">
 												<UISysIcon icon="fa-solid fa-download" />
-												{{ getFileName(url) }}
+												{{ file.filename }}
 											</a>
 										</div>
 										<!-- Regular file -->
-										<a v-else :href="url" target="_blank" class="file-link">
+										<a v-else :href="file.url" target="_blank" class="file-link">
 											<UISysIcon icon="fa-solid fa-file" />
-											{{ getFileName(url) }}
+											{{ file.filename }}
 										</a>
 									</template>
 								</div>
@@ -1001,6 +1073,7 @@ onMounted(() => {
 .summary-header-card {
 	display: flex;
 	justify-content: center;
+	gap: 3rem;
 	padding: 2.5rem;
 	background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
 	border-radius: var(--radius-lg);
@@ -1014,7 +1087,7 @@ onMounted(() => {
 }
 
 .summary-stat-value {
-	font-size: 3.5rem;
+	font-size: 2.5rem;
 	font-weight: 700;
 	color: white;
 	line-height: 1;
@@ -1022,7 +1095,7 @@ onMounted(() => {
 
 .summary-stat-label {
 	margin-top: 0.5rem;
-	font-size: 0.9375rem;
+	font-size: 0.875rem;
 	color: rgba(255, 255, 255, 0.85);
 	font-weight: 500;
 }
@@ -1872,11 +1945,13 @@ onMounted(() => {
 	}
 
 	.summary-header-card {
-		padding: 2rem 1.5rem;
+		padding: 1.5rem 1rem;
+		gap: 1.5rem;
+		flex-wrap: wrap;
 	}
 
 	.summary-stat-value {
-		font-size: 2.5rem;
+		font-size: 1.75rem;
 	}
 
 	.export-btn span {

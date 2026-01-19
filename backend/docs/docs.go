@@ -240,7 +240,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/formera_internal_pagination.Result"
+                            "$ref": "#/definitions/formera_internal_pkg.PaginationResult"
                         }
                     },
                     "401": {
@@ -660,7 +660,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get submission statistics for a form",
+                "description": "Get submission statistics for a form including views and conversion rate",
                 "produces": [
                     "application/json"
                 ],
@@ -914,7 +914,7 @@ const docTemplate = `{
         },
         "/public/forms/{id}": {
             "get": {
-                "description": "Get a published form by ID or slug (public access)",
+                "description": "Get a published form by ID or slug (public access). Increments view counter for analytics.",
                 "produces": [
                     "application/json"
                 ],
@@ -1479,6 +1479,10 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "string"
+                },
+                "view_count": {
+                    "description": "Analytics (DSGVO-compliant: anonymous counter only, no personal data)",
+                    "type": "integer"
                 }
             }
         },
@@ -1817,7 +1821,7 @@ const docTemplate = `{
                 "RoleUser"
             ]
         },
-        "formera_internal_pagination.Result": {
+        "formera_internal_pkg.PaginationResult": {
             "type": "object",
             "properties": {
                 "data": {},
@@ -1906,6 +1910,10 @@ const docTemplate = `{
         "internal_handlers.FormStatsResponse": {
             "type": "object",
             "properties": {
+                "conversion_rate": {
+                    "type": "number",
+                    "example": 15
+                },
                 "field_stats": {
                     "type": "object",
                     "additionalProperties": true
@@ -1913,6 +1921,10 @@ const docTemplate = `{
                 "total_submissions": {
                     "type": "integer",
                     "example": 150
+                },
+                "total_views": {
+                    "type": "integer",
+                    "example": 1000
                 }
             }
         },

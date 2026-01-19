@@ -79,6 +79,14 @@ const setLink = () => {
 		return;
 	}
 
+	// Validate URL - only allow http/https protocols to prevent javascript: XSS
+	if (!/^https?:\/\//i.test(url)) {
+		// If URL doesn't start with protocol, prepend https://
+		const safeUrl = url.startsWith("//") ? `https:${url}` : `https://${url}`;
+		editor.value?.chain().focus().extendMarkRange("link").setLink({ href: safeUrl }).run();
+		return;
+	}
+
 	editor.value?.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
 };
 </script>

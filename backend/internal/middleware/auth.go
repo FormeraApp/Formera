@@ -48,7 +48,7 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 
 		c.Set("user_id", claims.UserID)
 		c.Set("email", claims.Email)
-		c.Set("user_role", claims.Role)
+		c.Set("role", claims.Role)
 		c.Next()
 	}
 }
@@ -57,7 +57,7 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 // Uses the role from JWT claims instead of querying the database
 func AdminMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		role := c.GetString("user_role")
+		role := c.GetString("role")
 		if role == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
 			c.Abort()

@@ -1,4 +1,4 @@
-package pagination
+package pkg
 
 import (
 	"strconv"
@@ -13,14 +13,14 @@ const (
 	MaxPageSize     = 100
 )
 
-// Params holds pagination parameters
-type Params struct {
+// PaginationParams holds pagination parameters
+type PaginationParams struct {
 	Page     int `json:"page"`
 	PageSize int `json:"page_size"`
 }
 
-// Result holds paginated results
-type Result struct {
+// PaginationResult holds paginated results
+type PaginationResult struct {
 	Data       interface{} `json:"data"`
 	Page       int         `json:"page"`
 	PageSize   int         `json:"page_size"`
@@ -28,8 +28,8 @@ type Result struct {
 	TotalPages int         `json:"total_pages"`
 }
 
-// GetParams extracts pagination parameters from request
-func GetParams(c *gin.Context) Params {
+// GetPaginationParams extracts pagination parameters from request
+func GetPaginationParams(c *gin.Context) PaginationParams {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
 
@@ -43,32 +43,32 @@ func GetParams(c *gin.Context) Params {
 		pageSize = MaxPageSize
 	}
 
-	return Params{
+	return PaginationParams{
 		Page:     page,
 		PageSize: pageSize,
 	}
 }
 
 // Offset calculates the offset for database queries
-func (p Params) Offset() int {
+func (p PaginationParams) Offset() int {
 	return (p.Page - 1) * p.PageSize
 }
 
 // Paginate applies pagination to a GORM query
-func Paginate(params Params) func(db *gorm.DB) *gorm.DB {
+func Paginate(params PaginationParams) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Offset(params.Offset()).Limit(params.PageSize)
 	}
 }
 
-// CreateResult creates a paginated result
-func CreateResult(data interface{}, params Params, totalItems int64) Result {
+// CreatePaginationResult creates a paginated result
+func CreatePaginationResult(data interface{}, params PaginationParams, totalItems int64) PaginationResult {
 	totalPages := int(totalItems) / params.PageSize
 	if int(totalItems)%params.PageSize > 0 {
 		totalPages++
 	}
 
-	return Result{
+	return PaginationResult{
 		Data:       data,
 		Page:       params.Page,
 		PageSize:   params.PageSize,

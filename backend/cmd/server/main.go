@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,8 +12,8 @@ import (
 	"formera/internal/config"
 	"formera/internal/database"
 	"formera/internal/handlers"
-	"formera/internal/logger"
 	"formera/internal/middleware"
+	"formera/internal/pkg"
 	"formera/internal/storage"
 
 	"github.com/gin-contrib/cors"
@@ -45,25 +46,28 @@ import (
 // @description Type "Bearer" followed by a space and JWT token
 
 func main() {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("Configuration error: %v\n\nPlease set a secure JWT_SECRET environment variable (at least 32 characters).", err)
+	}
 
 	// Initialize logger
-	logger.Initialize(logger.Config{
+	pkg.InitializeLogger(pkg.LoggerConfig{
 		Level:  cfg.LogLevel,
 		Pretty: cfg.LogPretty,
 	})
 
 	// Initialize database
 	if err := database.Initialize(cfg.DBPath); err != nil {
-		logger.Fatal().Err(err).Msg("Failed to initialize database")
+		pkg.LogFatal().Err(err).Msg("Failed to initialize database")
 	}
 
 	// Initialize storage
 	store, err := initStorage(cfg)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to initialize storage")
+		pkg.LogFatal().Err(err).Msg("Failed to initialize storage")
 	}
-	logger.Info().Str("type", string(store.Type())).Msg("Storage initialized")
+	pkg.LogInfo().Str("type", string(store.Type())).Msg("Storage initialized")
 
 	// Start cleanup scheduler
 	cleanupScheduler := startCleanupScheduler(cfg, store)
@@ -81,19 +85,19 @@ func main() {
 		r.SetTrustedProxies([]string{}) // Trust none
 	} else {
 		if err := r.SetTrustedProxies(cfg.TrustedProxies); err != nil {
-			logger.Fatal().Err(err).Msg("Invalid trusted proxies configuration")
+			pkg.LogFatal().Err(err).Msg("Invalid trusted proxies configuration")
 		}
-		logger.Info().Strs("proxies", cfg.TrustedProxies).Msg("Trusted proxies configured")
+		pkg.LogInfo().Strs("proxies", cfg.TrustedProxies).Msg("Trusted proxies configured")
 	}
 
 	// Configure custom IP header if specified (e.g., CF-Connecting-IP for Cloudflare)
 	if cfg.RealIPHeader != "" {
 		r.RemoteIPHeaders = []string{cfg.RealIPHeader}
-		logger.Info().Str("header", cfg.RealIPHeader).Msg("Using custom IP header")
+		pkg.LogInfo().Str("header", cfg.RealIPHeader).Msg("Using custom IP header")
 	}
 
-	r.Use(logger.GinLogger())
-	r.Use(logger.GinRecovery())
+	r.Use(pkg.GinLogger())
+	r.Use(pkg.GinRecovery())
 	r.Use(middleware.SecurityHeaders())
 
 	// CORS configuration
@@ -104,32 +108,27 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
-	// Serve uploaded files - works for both local and S3 storage
-	// For local storage: serves files directly from disk
-	// For S3 storage: redirects to presigned URLs
-	if cfg.Storage.GetStorageType() == "local" {
-		r.Static("/uploads", cfg.Storage.LocalPath)
-	} else {
-		// For S3, use the upload handler to generate presigned URLs
-		uploadHandlerForFiles := handlers.NewUploadHandler(store)
-		r.GET("/uploads/*path", uploadHandlerForFiles.GetFile)
-	}
-
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(cfg.JWTSecret)
 	formHandler := handlers.NewFormHandler()
 	submissionHandler := handlers.NewSubmissionHandler()
 	setupHandler := handlers.NewSetupHandler(cfg.JWTSecret)
-	uploadHandler := handlers.NewUploadHandler(store)
+	uploadHandler := handlers.NewUploadHandler(store, cfg.JWTSecret, cfg.ApiURL)
 	userHandler := handlers.NewUserHandler()
+
+	// Serve uploaded files - all files require handler (no direct static serving)
+	// This ensures consistent behavior between local and S3 storage
+	// Public access via /uploads/* for form backgrounds, logos, etc.
+	// Protected access via /api/files/*?token=... for share links
+	r.GET("/uploads/*path", uploadHandler.GetFilePublic)
 
 	// Public routes with global rate limit (100 req/min per IP)
 	api := r.Group("/api")
 	api.Use(middleware.APIRateLimiter())
 	{
-		// Setup routes (public)
+		// Setup routes (public) - with strict rate limiting to prevent brute force
 		api.GET("/setup/status", setupHandler.GetStatus)
-		api.POST("/setup/complete", setupHandler.CompleteSetup)
+		api.POST("/setup/complete", middleware.AuthRateLimiter(), setupHandler.CompleteSetup)
 
 		// Auth routes with stricter rate limit (10 req/min per IP)
 		api.POST("/auth/register", middleware.AuthRateLimiter(), authHandler.Register)
@@ -145,8 +144,8 @@ func main() {
 		// Public file upload (for form submissions with file fields)
 		api.POST("/public/upload", uploadHandler.UploadFile)
 
-		// File serving endpoint (redirects to S3 presigned URL or local file)
-		api.GET("/files/*path", uploadHandler.GetFile)
+		// File serving endpoint with share token protection
+		api.GET("/files/*path", uploadHandler.GetFileProtected)
 	}
 
 	// Protected routes
@@ -178,6 +177,9 @@ func main() {
 		protected.POST("/uploads/image", uploadHandler.UploadImage)
 		protected.POST("/uploads/file", uploadHandler.UploadFile)
 		protected.DELETE("/uploads/:id", uploadHandler.DeleteFile)
+
+		// File share URL generation (authenticated)
+		protected.POST("/files/share", uploadHandler.GenerateShareURL)
 	}
 
 	// Admin routes (requires admin role)
@@ -230,9 +232,9 @@ func main() {
 
 	// Start server in goroutine
 	go func() {
-		logger.Info().Str("port", cfg.Port).Msg("Server starting")
+		pkg.LogInfo().Str("port", cfg.Port).Msg("Server starting")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatal().Err(err).Msg("Failed to start server")
+			pkg.LogFatal().Err(err).Msg("Failed to start server")
 		}
 	}()
 
@@ -241,7 +243,7 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	logger.Info().Msg("Shutting down server...")
+	pkg.LogInfo().Msg("Shutting down server...")
 
 	// Give outstanding requests 30 seconds to complete
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -252,10 +254,10 @@ func main() {
 
 	// Shutdown HTTP server
 	if err := srv.Shutdown(ctx); err != nil {
-		logger.Error().Err(err).Msg("Server forced to shutdown")
+		pkg.LogError().Err(err).Msg("Server forced to shutdown")
 	}
 
-	logger.Info().Msg("Server exited")
+	pkg.LogInfo().Msg("Server exited")
 }
 
 // initStorage initializes the appropriate storage backend based on configuration
@@ -300,25 +302,25 @@ func migrateLocalToS3(cfg *config.Config, s3Store *storage.S3Storage) {
 		return // No local files to migrate
 	}
 
-	logger.Info().Msg("Checking for local files to migrate to S3...")
+	pkg.LogInfo().Msg("Checking for local files to migrate to S3...")
 
 	result, err := storage.MigrateLocalToS3(localPath, s3Store, cfg.Storage.DeleteAfterMigrate)
 	if err != nil {
-		logger.Error().Err(err).Msg("Migration error")
+		pkg.LogError().Err(err).Msg("Migration error")
 		return
 	}
 
 	if result.MigratedFiles > 0 {
-		logger.Info().
+		pkg.LogInfo().
 			Int("files", result.MigratedFiles).
 			Float64("size_mb", float64(result.MigratedBytes)/(1024*1024)).
 			Msg("Migration complete")
 	}
 
 	if len(result.Errors) > 0 {
-		logger.Warn().Int("count", len(result.Errors)).Msg("Migration had errors")
+		pkg.LogWarn().Int("count", len(result.Errors)).Msg("Migration had errors")
 		for _, e := range result.Errors {
-			logger.Warn().Str("error", e).Msg("Migration error detail")
+			pkg.LogWarn().Str("error", e).Msg("Migration error detail")
 		}
 	}
 }

@@ -1,4 +1,4 @@
-package testutil
+package pkg
 
 import (
 	"formera/internal/database"

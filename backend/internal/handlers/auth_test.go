@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"formera/internal/models"
-	"formera/internal/testutil"
+	"formera/internal/pkg"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,8 +18,8 @@ func init() {
 }
 
 func TestAuthHandler_Login_Success(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	handler := NewAuthHandler("test-secret")
 	router := gin.New()
@@ -58,8 +58,8 @@ func TestAuthHandler_Login_Success(t *testing.T) {
 }
 
 func TestAuthHandler_Login_InvalidCredentials(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	handler := NewAuthHandler("test-secret")
 	router := gin.New()
@@ -97,7 +97,7 @@ func TestAuthHandler_Login_InvalidCredentials(t *testing.T) {
 }
 
 func TestAuthHandler_Login_InvalidRequest(t *testing.T) {
-	testutil.SetupTestDB(t)
+	pkg.SetupTestDB(t)
 
 	handler := NewAuthHandler("test-secret")
 	router := gin.New()
@@ -129,7 +129,7 @@ func TestAuthHandler_Login_InvalidRequest(t *testing.T) {
 }
 
 func TestAuthHandler_Register_Disabled(t *testing.T) {
-	db := testutil.SetupTestDB(t)
+	db := pkg.SetupTestDB(t)
 	db.Model(&models.Settings{}).Where("id = ?", 1).Update("allow_registration", false)
 
 	handler := NewAuthHandler("test-secret")
@@ -155,7 +155,7 @@ func TestAuthHandler_Register_Disabled(t *testing.T) {
 }
 
 func TestAuthHandler_Register_Success(t *testing.T) {
-	db := testutil.SetupTestDB(t)
+	db := pkg.SetupTestDB(t)
 	db.Model(&models.Settings{}).Where("id = ?", 1).Update("allow_registration", true)
 
 	handler := NewAuthHandler("test-secret")
@@ -193,9 +193,9 @@ func TestAuthHandler_Register_Success(t *testing.T) {
 }
 
 func TestAuthHandler_Register_DuplicateEmail(t *testing.T) {
-	db := testutil.SetupTestDB(t)
+	db := pkg.SetupTestDB(t)
 	db.Model(&models.Settings{}).Where("id = ?", 1).Update("allow_registration", true)
-	testutil.CreateTestUser(t, db, "existing@example.com", "password123", models.RoleUser)
+	pkg.CreateTestUser(t, db, "existing@example.com", "password123", models.RoleUser)
 
 	handler := NewAuthHandler("test-secret")
 	router := gin.New()
@@ -220,8 +220,8 @@ func TestAuthHandler_Register_DuplicateEmail(t *testing.T) {
 }
 
 func TestAuthHandler_Me_Success(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	handler := NewAuthHandler("test-secret")
 	router := gin.New()
@@ -250,7 +250,7 @@ func TestAuthHandler_Me_Success(t *testing.T) {
 }
 
 func TestAuthHandler_Me_NotFound(t *testing.T) {
-	testutil.SetupTestDB(t)
+	pkg.SetupTestDB(t)
 
 	handler := NewAuthHandler("test-secret")
 	router := gin.New()

@@ -5,6 +5,7 @@ import (
 
 	"formera/internal/database"
 	"formera/internal/models"
+	"formera/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -95,6 +96,12 @@ func (h *SetupHandler) CompleteSetup(c *gin.Context) {
 		return
 	}
 
+	// Validate password complexity
+	if valid, msg := ValidatePasswordComplexity(req.Password); !valid {
+		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		return
+	}
+
 	user := &models.User{
 		Email: req.Email,
 		Name:  req.Name,
@@ -121,6 +128,9 @@ func (h *SetupHandler) CompleteSetup(c *gin.Context) {
 	}
 
 	database.DB.Save(&settings)
+
+	// Log setup completion
+	services.LogSetupComplete(c, user.ID, user.Email)
 
 	authHandler := NewAuthHandler(h.JWTSecret)
 	token, err := authHandler.generateToken(user)

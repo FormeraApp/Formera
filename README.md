@@ -111,6 +111,13 @@ cd frontend && yarn install && yarn dev
 | `JWT_SECRET` | JWT signing key (change in production!) | - |
 | `CORS_ORIGIN` | Allowed origin (optional) | - |
 
+### Proxy / Rate Limiting
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `TRUSTED_PROXIES` | Trusted proxy IPs/CIDRs (comma-separated) | - (trust all) |
+| `REAL_IP_HEADER` | Custom header for client IP (e.g., `CF-Connecting-IP`) | - |
+
 ### Storage
 
 | Variable | Description | Default |
@@ -199,6 +206,12 @@ cd backend && go test -v -cover ./...
 # Run specific package tests
 cd backend && go test -v ./internal/handlers/...
 ```
+
+## API Documentation
+
+Swagger/OpenAPI documentation is available at `/swagger/index.html` when running the backend.
+
+For the hosted version, visit the [API Docs](https://formeraapp.github.io/formera/) on GitHub Pages.
 
 ## Security
 

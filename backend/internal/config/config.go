@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"log"
 	"os"
 	"strconv"
@@ -8,6 +9,13 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+)
+
+// Configuration errors
+var (
+	ErrJWTSecretRequired = errors.New("JWT_SECRET environment variable is required")
+	ErrJWTSecretTooShort = errors.New("JWT_SECRET must be at least 32 characters")
+	ErrJWTSecretInsecure = errors.New("JWT_SECRET is using an insecure default value")
 )
 
 func init() {
@@ -102,7 +110,9 @@ func (s *StorageConfig) GetStorageType() string {
 	return "local"
 }
 
-func Load() *Config {
+// Load loads configuration from environment variables.
+// Returns an error if JWT_SECRET is missing, too short, or insecure.
+func Load() (*Config, error) {
 	presignMinutes, _ := strconv.Atoi(getEnv("S3_PRESIGN_MINUTES", "60"))
 	cleanupInterval, _ := strconv.Atoi(getEnv("CLEANUP_INTERVAL_HOURS", "24"))
 	cleanupMinAge, _ := strconv.Atoi(getEnv("CLEANUP_MIN_AGE_DAYS", "7"))
@@ -110,6 +120,12 @@ func Load() *Config {
 	port := getEnv("PORT", "8080")
 	baseURL := getEnv("BASE_URL", "http://localhost:3000")
 	apiURL := getEnv("API_URL", "http://localhost:"+port)
+
+	// Validate JWT_SECRET
+	jwtSecret := getEnv("JWT_SECRET", "")
+	if err := validateJWTSecret(jwtSecret); err != nil {
+		return nil, err
+	}
 
 	// CORS_ORIGIN defaults to BASE_URL if not set (same-origin deployment)
 	corsOrigin := getEnv("CORS_ORIGIN", "")
@@ -121,7 +137,7 @@ func Load() *Config {
 		BaseURL:        baseURL,
 		ApiURL:         apiURL,
 		DBPath:         getEnv("DB_PATH", "./data/formera.db"),
-		JWTSecret:      getEnv("JWT_SECRET", "change-me-in-production-please"),
+		JWTSecret:      jwtSecret,
 		CorsOrigin:     corsOrigin,
 		LogLevel:       getEnv("LOG_LEVEL", "info"),
 		LogPretty:      getEnv("LOG_PRETTY", "true") == "true",
@@ -155,7 +171,32 @@ func Load() *Config {
 			MinAgeDays:    cleanupMinAge,
 			DryRun:        getEnv("CLEANUP_DRY_RUN", "false") == "true",
 		},
+	}, nil
+}
+
+// validateJWTSecret checks if the JWT secret is secure
+func validateJWTSecret(secret string) error {
+	if secret == "" {
+		return ErrJWTSecretRequired
 	}
+	if len(secret) < 32 {
+		return ErrJWTSecretTooShort
+	}
+	// List of known insecure default values
+	insecureDefaults := []string{
+		"change-me-in-production-please",
+		"secret",
+		"your-secret-key",
+		"changeme",
+		"password",
+	}
+	secretLower := strings.ToLower(secret)
+	for _, insecure := range insecureDefaults {
+		if secretLower == insecure {
+			return ErrJWTSecretInsecure
+		}
+	}
+	return nil
 }
 
 func getEnv(key, fallback string) string {

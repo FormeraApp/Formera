@@ -8,16 +8,15 @@ import (
 	"testing"
 
 	"formera/internal/models"
-	"formera/internal/pagination"
-	"formera/internal/testutil"
+	"formera/internal/pkg"
 
 	"github.com/gin-gonic/gin"
 )
 
 func TestUserHandler_List(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	testutil.CreateTestUser(t, db, "user1@example.com", "password123", models.RoleUser)
-	testutil.CreateTestUser(t, db, "user2@example.com", "password123", models.RoleAdmin)
+	db := pkg.SetupTestDB(t)
+	pkg.CreateTestUser(t, db, "user1@example.com", "password123", models.RoleUser)
+	pkg.CreateTestUser(t, db, "user2@example.com", "password123", models.RoleAdmin)
 
 	handler := NewUserHandler()
 	router := gin.New()
@@ -32,7 +31,7 @@ func TestUserHandler_List(t *testing.T) {
 		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
 	}
 
-	var response pagination.Result
+	var response pkg.PaginationResult
 	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
 		t.Fatalf("failed to unmarshal response: %v", err)
 	}
@@ -43,8 +42,8 @@ func TestUserHandler_List(t *testing.T) {
 }
 
 func TestUserHandler_Get(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	handler := NewUserHandler()
 	router := gin.New()
@@ -70,7 +69,7 @@ func TestUserHandler_Get(t *testing.T) {
 }
 
 func TestUserHandler_Get_NotFound(t *testing.T) {
-	testutil.SetupTestDB(t)
+	pkg.SetupTestDB(t)
 
 	handler := NewUserHandler()
 	router := gin.New()
@@ -87,7 +86,7 @@ func TestUserHandler_Get_NotFound(t *testing.T) {
 }
 
 func TestUserHandler_Create(t *testing.T) {
-	testutil.SetupTestDB(t)
+	pkg.SetupTestDB(t)
 
 	handler := NewUserHandler()
 	router := gin.New()
@@ -122,8 +121,8 @@ func TestUserHandler_Create(t *testing.T) {
 }
 
 func TestUserHandler_Create_DuplicateEmail(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	testutil.CreateTestUser(t, db, "existing@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	pkg.CreateTestUser(t, db, "existing@example.com", "password123", models.RoleUser)
 
 	handler := NewUserHandler()
 	router := gin.New()
@@ -149,8 +148,8 @@ func TestUserHandler_Create_DuplicateEmail(t *testing.T) {
 }
 
 func TestUserHandler_Update(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
 
 	handler := NewUserHandler()
 	router := gin.New()
@@ -182,9 +181,9 @@ func TestUserHandler_Update(t *testing.T) {
 }
 
 func TestUserHandler_Delete(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	admin := testutil.CreateTestUser(t, db, "admin@example.com", "password123", models.RoleAdmin)
-	user := testutil.CreateTestUser(t, db, "user@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	admin := pkg.CreateTestUser(t, db, "admin@example.com", "password123", models.RoleAdmin)
+	user := pkg.CreateTestUser(t, db, "user@example.com", "password123", models.RoleUser)
 
 	handler := NewUserHandler()
 	router := gin.New()
@@ -204,8 +203,8 @@ func TestUserHandler_Delete(t *testing.T) {
 }
 
 func TestUserHandler_Delete_SelfDelete(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "user@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "user@example.com", "password123", models.RoleUser)
 
 	handler := NewUserHandler()
 	router := gin.New()
@@ -225,9 +224,9 @@ func TestUserHandler_Delete_SelfDelete(t *testing.T) {
 }
 
 func TestUserHandler_Delete_LastAdmin(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	admin := testutil.CreateTestUser(t, db, "admin@example.com", "password123", models.RoleAdmin)
-	user := testutil.CreateTestUser(t, db, "user@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	admin := pkg.CreateTestUser(t, db, "admin@example.com", "password123", models.RoleAdmin)
+	user := pkg.CreateTestUser(t, db, "user@example.com", "password123", models.RoleUser)
 
 	handler := NewUserHandler()
 	router := gin.New()
@@ -247,8 +246,8 @@ func TestUserHandler_Delete_LastAdmin(t *testing.T) {
 }
 
 func TestUserHandler_Delete_LastUser(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	user := testutil.CreateTestUser(t, db, "user@example.com", "password123", models.RoleUser)
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "user@example.com", "password123", models.RoleUser)
 
 	handler := NewUserHandler()
 	router := gin.New()

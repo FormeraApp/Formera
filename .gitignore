@@ -39,3 +39,4 @@ coverage/
 backend/_temp
 backend/.DS_Store
 backend/.env
+backend/server
