@@ -338,10 +338,10 @@ onMounted(() => {
 									<UISysIcon icon="fa-solid fa-layer-group" />
 									<span>{{ $t("forms.card.fields", { count: form.fields?.length || 0 }) }}</span>
 								</div>
-								<div class="meta-item">
+								<NuxtLink :to="`/forms/${form.id}/responses`" class="meta-item meta-item-link">
 									<UISysIcon icon="fa-solid fa-inbox" />
 									<span>{{ $t("forms.card.responses", { count: formStats[form.id] || 0 }) }}</span>
-								</div>
+								</NuxtLink>
 							</div>
 						</div>
 
@@ -829,6 +829,25 @@ onMounted(() => {
 .meta-item :deep(svg) {
 	font-size: 0.6875rem;
 	opacity: 0.7;
+}
+
+.meta-item-link {
+	text-decoration: none;
+	border-radius: var(--radius);
+	padding: 0.125rem 0.375rem;
+	margin: -0.125rem -0.375rem;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.meta-item-link:hover {
+	color: var(--primary);
+	background: rgba(99, 102, 241, 0.1);
+	text-decoration: none;
+}
+
+.meta-item-link:hover :deep(i),
+.meta-item-link:hover :deep(svg) {
+	opacity: 1;
 }
 
 /* Card Footer */
