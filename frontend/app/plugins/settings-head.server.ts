@@ -99,7 +99,7 @@ export default defineNuxtPlugin(async () => {
 			// Inline script to apply system theme before paint (prevents flash)
 			...(themeScript ? [{ innerHTML: themeScript, tagPosition: "head" as const }] : []),
 			{
-				src: "https://kit.fontawesome.com/b0b0028fa2.js",
+				src: "https://kit.fontawesome.com/1cc2fe2725.js",
 				crossorigin: "anonymous",
 			},
 		],
