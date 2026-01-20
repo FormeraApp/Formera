@@ -3,6 +3,7 @@ const route = useRoute();
 const { t } = useI18n();
 const { formsApi, submissionsApi } = useApi();
 const { validateField } = useFieldValidation();
+const { isFieldVisible, getHiddenFields } = useConditionalLogic();
 
 const id = route.params.id as string;
 
@@ -245,6 +246,11 @@ const isFirstPage = computed(() => currentPage.value === 0);
 const isLastPage = computed(() => currentPage.value === totalPages.value - 1);
 const currentPageFields = computed(() => pages.value[currentPage.value] || []);
 
+// Filter fields by visibility conditions
+const visibleFieldsOnCurrentPage = computed(() => {
+	return currentPageFields.value.filter((field) => isFieldVisible(field, formData.value));
+});
+
 // Validate a single field
 const validateSingleField = (field: FormField): string => {
 	// For file fields, check the component's hasFiles state instead of formData
@@ -274,6 +280,11 @@ const validateCurrentPage = (): boolean => {
 	for (const field of currentPageFields.value) {
 		if (isLayoutField(field.type)) continue;
 
+		// Skip validation for hidden fields
+		if (!isFieldVisible(field, formData.value)) {
+			continue;
+		}
+
 		// Mark as touched
 		touchedFields.value.add(field.id);
 
@@ -295,6 +306,11 @@ const validateAllFields = (): boolean => {
 
 	for (const field of formFields.value) {
 		if (isLayoutField(field.type)) continue;
+
+		// Skip validation for hidden fields
+		if (!isFieldVisible(field, formData.value)) {
+			continue;
+		}
 
 		const errorMessage = validateSingleField(field);
 		if (errorMessage) {
@@ -385,9 +401,16 @@ const handleSubmit = async () => {
 			}
 		}
 
+		// Remove data from hidden fields before submission
+		const hiddenFields = getHiddenFields(formFields.value, formData.value);
+		const cleanedFormData = { ...formData.value };
+		hiddenFields.forEach((field) => {
+			delete cleanedFormData[field.id];
+		});
+
 		// Include tracking parameters if present
 		const metadata = Object.keys(trackingParams.value).length > 0 ? trackingParams.value : undefined;
-		const response = await submissionsApi.submit(form.value.id, formData.value, metadata);
+		const response = await submissionsApi.submit(form.value.id, cleanedFormData, metadata);
 		success.value = response.message || form.value.settings.success_message || "Vielen Dank für Ihre Antwort!";
 	} catch (err: unknown) {
 		const errorMessage = err instanceof Error ? err.message : "Fehler beim Absenden";
@@ -579,8 +602,8 @@ onUnmounted(() => {
 				{{ error }}
 			</div>
 
-			<div class="fields">
-				<template v-for="field in currentPageFields" :key="field.id">
+			<TransitionGroup name="field-fade" tag="div" class="fields">
+				<template v-for="field in visibleFieldsOnCurrentPage" :key="field.id">
 					<!-- Layout: Section -->
 					<FormFieldsSectionField
 						v-if="field.type === 'section'"
@@ -747,7 +770,7 @@ onUnmounted(() => {
 						/>
 					</FormFieldsFieldWrapper>
 				</template>
-			</div>
+			</TransitionGroup>
 
 			<div class="footer">
 				<div v-if="isMultiPage" class="footer-nav">
@@ -1299,5 +1322,25 @@ onUnmounted(() => {
 
 .password-submit {
 	width: 100%;
+}
+
+/* Field fade transition for conditional logic */
+.field-fade-enter-active,
+.field-fade-leave-active {
+	transition: all 0.3s ease;
+}
+
+.field-fade-enter-from {
+	opacity: 0;
+	transform: translateY(-10px);
+}
+
+.field-fade-leave-to {
+	opacity: 0;
+	transform: translateY(10px);
+}
+
+.field-fade-move {
+	transition: transform 0.3s ease;
 }
 </style>

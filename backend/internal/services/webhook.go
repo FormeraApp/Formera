@@ -197,14 +197,6 @@ func isDiscordWebhook(url string) bool {
 
 // transformToDiscordPayload converts our webhook payload to Discord format
 func transformToDiscordPayload(payload models.WebhookPayload, config *models.DiscordConfig, lang string) ([]byte, error) {
-	// Debug log to track Discord config
-	if config != nil {
-		fmt.Printf("[DEBUG] Discord config received: show_form_title=%v, show_slug=%v, fields=%v, custom_title=%s\n",
-			config.ShowFormTitle, config.ShowSlug, config.Fields, config.CustomTitle)
-	} else {
-		fmt.Println("[DEBUG] Discord config is nil")
-	}
-
 	// Color based on event type (Discord uses decimal color values)
 	color := 5814783 // Default blue (#58b9bf)
 	eventTitle := "Webhook Event"
@@ -275,20 +267,15 @@ func transformToDiscordPayload(payload models.WebhookPayload, config *models.Dis
 
 	// Add submission data fields (limit to first 10 to avoid Discord limits)
 	fieldCount := 0
-	fmt.Printf("[DEBUG] payload.Data is nil: %v\n", payload.Data == nil)
 	if payload.Data != nil {
-		fmt.Printf("[DEBUG] payload.Data keys: %v\n", getMapKeys(payload.Data))
 		// Check if there's a submission object with data
 		submission, ok := payload.Data["submission"].(map[string]interface{})
-		fmt.Printf("[DEBUG] submission cast ok: %v\n", ok)
 		if ok {
-			fmt.Printf("[DEBUG] submission keys: %v\n", getMapKeys(submission))
 			// Use reflection to handle any map type (models.SubmissionData or map[string]interface{})
 			var submissionData map[string]interface{}
 			var ok2 bool
 			if rawData := submission["data"]; rawData != nil {
 				rv := reflect.ValueOf(rawData)
-				fmt.Printf("[DEBUG] rawData reflect kind: %v, type: %T\n", rv.Kind(), rawData)
 				if rv.Kind() == reflect.Map {
 					submissionData = make(map[string]interface{})
 					for _, key := range rv.MapKeys() {
@@ -297,16 +284,13 @@ func transformToDiscordPayload(payload models.WebhookPayload, config *models.Dis
 					ok2 = true
 				}
 			}
-			fmt.Printf("[DEBUG] submissionData cast ok: %v, type: %T\n", ok2, submission["data"])
 			if ok2 {
-				fmt.Printf("[DEBUG] Processing submission data keys: %v\n", getMapKeys(submissionData))
 				for key, value := range submissionData {
 					if fieldCount >= 10 {
 						break
 					}
 					// Skip if field filtering is enabled and this field is not in the list
 					if allowedFields != nil && !allowedFields[key] {
-						fmt.Printf("[DEBUG] Skipping field '%s' - not in allowed list\n", key)
 						continue
 					}
 					valueStr := formatFieldValue(value)

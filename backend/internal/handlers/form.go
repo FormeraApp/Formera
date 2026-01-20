@@ -82,6 +82,14 @@ func (h *FormHandler) Create(c *gin.Context) {
 		return
 	}
 
+	// Validate field conditions
+	if len(req.Fields) > 0 {
+		if err := ValidateFieldConditions(req.Fields); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid field conditions: " + err.Error()})
+			return
+		}
+	}
+
 	form := &models.Form{
 		UserID:      userID,
 		Title:       pkg.StripHTMLPreserveEntities(req.Title),
@@ -327,6 +335,11 @@ func (h *FormHandler) Update(c *gin.Context) {
 		form.Description = pkg.SanitizeHTML(req.Description)
 	}
 	if req.Fields != nil {
+		// Validate field conditions
+		if err := ValidateFieldConditions(req.Fields); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid field conditions: " + err.Error()})
+			return
+		}
 		form.Fields = req.Fields
 	}
 	if req.Status != "" {

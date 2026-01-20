@@ -70,6 +70,38 @@ export interface FieldValidation {
 	invalidMessage?: string;
 }
 
+// Condition operator types
+export type ConditionOperator =
+	| "equals"
+	| "not_equals"
+	| "contains"
+	| "not_contains"
+	| "greater_than"
+	| "less_than"
+	| "greater_or_equal"
+	| "less_or_equal"
+	| "is_empty"
+	| "is_not_empty"
+	| "starts_with"
+	| "ends_with";
+
+// Logic operator for combining multiple conditions
+export type LogicOperator = "and" | "or";
+
+// Single condition rule
+export interface ConditionRule {
+	fieldId: string;
+	operator: ConditionOperator;
+	value: unknown;
+}
+
+// Field visibility conditions
+export interface FieldConditions {
+	show: boolean;
+	logic: LogicOperator;
+	rules: ConditionRule[];
+}
+
 export interface FormField {
 	id: string;
 	type: FieldType;
@@ -102,6 +134,8 @@ export interface FormField {
 	allowedTypes?: string[];
 	maxFileSize?: number;
 	multiple?: boolean;
+	// Conditional Logic
+	conditions?: FieldConditions;
 }
 
 // Design settings for the public form

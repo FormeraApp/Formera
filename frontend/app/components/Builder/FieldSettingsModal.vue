@@ -4,6 +4,7 @@ const { t } = useI18n();
 const props = defineProps<{
 	open?: boolean;
 	field?: FormField | null;
+	allFields?: FormField[];
 }>();
 
 const emit = defineEmits(["update:open", "update:field"]);
@@ -185,6 +186,20 @@ const deleteOption = (index: number) => {
 							:placeholder="$t('builder.fieldSettings.helpTextPlaceholder')"
 							type="text"
 							@input="update('description', ($event.target as HTMLInputElement).value)"
+						/>
+					</div>
+
+					<!-- Conditional Logic Section -->
+					<div v-if="!isLayoutField" class="conditions-section">
+						<div class="section-title">
+							<UISysIcon icon="fa-solid fa-code-branch" />
+							{{ $t("builder.fieldSettings.conditionalLogic") }}
+						</div>
+
+						<BuilderConditionBuilder
+							:field="field"
+							:available-fields="allFields || []"
+							@update:conditions="update('conditions', $event)"
 						/>
 					</div>
 
@@ -673,6 +688,13 @@ const deleteOption = (index: number) => {
 
 /* Validation Section */
 .validation-section {
+	padding-top: 1.25rem;
+	margin-top: 0.5rem;
+	border-top: 1px solid var(--border);
+}
+
+/* Conditional Logic Section */
+.conditions-section {
 	padding-top: 1.25rem;
 	margin-top: 0.5rem;
 	border-top: 1px solid var(--border);

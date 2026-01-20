@@ -50,6 +50,46 @@ const (
 	FieldTypeImage     FieldType = "image"
 )
 
+// Condition operator types
+type ConditionOperator string
+
+const (
+	OpEquals         ConditionOperator = "equals"
+	OpNotEquals      ConditionOperator = "not_equals"
+	OpContains       ConditionOperator = "contains"
+	OpNotContains    ConditionOperator = "not_contains"
+	OpGreaterThan    ConditionOperator = "greater_than"
+	OpLessThan       ConditionOperator = "less_than"
+	OpGreaterOrEqual ConditionOperator = "greater_or_equal"
+	OpLessOrEqual    ConditionOperator = "less_or_equal"
+	OpIsEmpty        ConditionOperator = "is_empty"
+	OpIsNotEmpty     ConditionOperator = "is_not_empty"
+	OpStartsWith     ConditionOperator = "starts_with"
+	OpEndsWith       ConditionOperator = "ends_with"
+)
+
+// Logic operator for combining multiple conditions
+type LogicOperator string
+
+const (
+	LogicAnd LogicOperator = "and"
+	LogicOr  LogicOperator = "or"
+)
+
+// ConditionRule represents a single condition
+type ConditionRule struct {
+	FieldID  string            `json:"fieldId"`
+	Operator ConditionOperator `json:"operator"`
+	Value    interface{}       `json:"value"`
+}
+
+// FieldConditions represents the visibility conditions for a field
+type FieldConditions struct {
+	Show  bool            `json:"show"`  // true = show when met, false = hide when met
+	Logic LogicOperator   `json:"logic"` // "and" or "or"
+	Rules []ConditionRule `json:"rules"`
+}
+
 type FormField struct {
 	ID          string                 `json:"id"`
 	Type        FieldType              `json:"type"`
@@ -82,6 +122,8 @@ type FormField struct {
 	AllowedTypes []string `json:"allowedTypes,omitempty"`
 	MaxFileSize  int      `json:"maxFileSize,omitempty"`
 	Multiple     bool     `json:"multiple,omitempty"`
+	// Conditional Logic
+	Conditions *FieldConditions `json:"conditions,omitempty"`
 }
 
 type FormFields []FormField

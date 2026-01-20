@@ -340,6 +340,7 @@
 			"valueRange": "Value range",
 			"requiredErrorMessage": "Error message (Required)",
 			"requiredErrorPlaceholder": "Default: 'This field is required'",
+			"conditionalLogic": "Conditional Logic",
 			"edit": "edit",
 			"done": "Done"
 		},
@@ -425,6 +426,39 @@
 			"passwordPlaceholder": "Enter password",
 			"keepExistingPassword": "Leave empty to keep existing password",
 			"passwordAlreadySet": "Password is already set"
+		}
+	},
+	"conditions": {
+		"enableConditionalLogic": "Enable conditional logic",
+		"enableHint": "Show or hide this field based on other field values",
+		"action": "Action",
+		"show": "Show when",
+		"hide": "Hide when",
+		"matchLogic": "Match logic",
+		"matchAll": "All conditions met (AND)",
+		"matchAny": "Any condition met (OR)",
+		"rules": "Rules",
+		"noFieldsAvailable": "No fields available for conditions",
+		"field": "Field",
+		"operator": "Operator",
+		"value": "Value",
+		"selectValue": "Select value",
+		"enterValue": "Enter value",
+		"addRule": "Add rule",
+		"removeRule": "Remove rule",
+		"operators": {
+			"equals": "equals",
+			"not_equals": "not equals",
+			"contains": "contains",
+			"not_contains": "does not contain",
+			"starts_with": "starts with",
+			"ends_with": "ends with",
+			"greater_than": "greater than",
+			"less_than": "less than",
+			"greater_or_equal": "greater or equal",
+			"less_or_equal": "less or equal",
+			"is_empty": "is empty",
+			"is_not_empty": "is not empty"
 		}
 	},
 	"dialog": {

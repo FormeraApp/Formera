@@ -340,6 +340,7 @@
 			"valueRange": "Wertebereich",
 			"requiredErrorMessage": "Fehlermeldung (Pflichtfeld)",
 			"requiredErrorPlaceholder": "Standard: 'Dieses Feld ist erforderlich'",
+			"conditionalLogic": "Bedingte Logik",
 			"edit": "bearbeiten",
 			"done": "Fertig"
 		},
@@ -425,6 +426,39 @@
 			"passwordPlaceholder": "Passwort eingeben",
 			"keepExistingPassword": "Leer lassen für bestehendes Passwort",
 			"passwordAlreadySet": "Passwort ist bereits gesetzt"
+		}
+	},
+	"conditions": {
+		"enableConditionalLogic": "Bedingte Logik aktivieren",
+		"enableHint": "Dieses Feld basierend auf anderen Feldwerten anzeigen oder ausblenden",
+		"action": "Aktion",
+		"show": "Anzeigen, wenn",
+		"hide": "Ausblenden, wenn",
+		"matchLogic": "Übereinstimmungslogik",
+		"matchAll": "Alle Bedingungen erfüllt (UND)",
+		"matchAny": "Mindestens eine Bedingung erfüllt (ODER)",
+		"rules": "Regeln",
+		"noFieldsAvailable": "Keine Felder verfügbar für Bedingungen",
+		"field": "Feld",
+		"operator": "Operator",
+		"value": "Wert",
+		"selectValue": "Wert wählen",
+		"enterValue": "Wert eingeben",
+		"addRule": "Regel hinzufügen",
+		"removeRule": "Regel entfernen",
+		"operators": {
+			"equals": "gleich",
+			"not_equals": "ungleich",
+			"contains": "enthält",
+			"not_contains": "enthält nicht",
+			"starts_with": "beginnt mit",
+			"ends_with": "endet mit",
+			"greater_than": "größer als",
+			"less_than": "kleiner als",
+			"greater_or_equal": "größer oder gleich",
+			"less_or_equal": "kleiner oder gleich",
+			"is_empty": "ist leer",
+			"is_not_empty": "ist nicht leer"
 		}
 	},
 	"dialog": {

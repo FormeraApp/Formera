@@ -357,6 +357,7 @@ const updateFormFromSettings = (updatedForm: Form) => {
 	<BuilderFieldSettingsModal
 		v-model:open="showFieldSettingsModal"
 		:field="selectedField"
+		:all-fields="fields"
 		@update:field="updateField"
 	/>
 
