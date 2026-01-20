@@ -31,7 +31,7 @@ func Initialize(dbPath string) error {
 	}
 
 	// Auto-migrate the schema
-	err = DB.AutoMigrate(&models.User{}, &models.Form{}, &models.Submission{}, &models.Settings{}, &storage.FileRecord{}, &models.AuditLog{})
+	err = DB.AutoMigrate(&models.User{}, &models.Form{}, &models.Submission{}, &models.Settings{}, &storage.FileRecord{}, &models.AuditLog{}, &models.Webhook{}, &models.WebhookLog{})
 	if err != nil {
 		return err
 	}

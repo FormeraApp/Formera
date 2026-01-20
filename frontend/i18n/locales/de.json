@@ -69,7 +69,12 @@
 			"general": "Allgemein",
 			"design": "Design",
 			"footer": "Footer Links",
-			"users": "Benutzer"
+			"users": "Benutzer",
+			"webhooks": "Webhooks"
+		},
+		"webhooks": {
+			"title": "Globale Webhooks",
+			"description": "Globale Webhooks werden für alle Formular-Einreichungen in Ihrer Anwendung ausgelöst."
 		},
 		"general": {
 			"application": "Anwendung",
@@ -223,7 +228,8 @@
 			"noChangesMessage": "Es gibt keine ungespeicherten Änderungen",
 			"tabs": {
 				"designer": "Designer",
-				"settings": "Einstellungen"
+				"settings": "Einstellungen",
+				"responses": "Antworten"
 			},
 			"preview": "Vorschau",
 			"save": "Speichern",
@@ -341,7 +347,8 @@
 			"tabs": {
 				"general": "Allgemein",
 				"design": "Design",
-				"access": "Link & Zugriff"
+				"access": "Link & Zugriff",
+				"webhooks": "Webhooks"
 			},
 			"form": "Formular",
 			"buttonText": "Button-Text",
@@ -630,6 +637,65 @@
 		"image": {
 			"label": "Bild",
 			"description": "Bild einfügen"
+		}
+	},
+	"webhooks": {
+		"loadError": "Webhooks konnten nicht geladen werden",
+		"title": "Webhooks",
+		"add": "Webhook hinzufügen",
+		"addFirst": "Ersten Webhook hinzufügen",
+		"addTitle": "Webhook hinzufügen",
+		"editTitle": "Webhook bearbeiten",
+		"empty": "Keine Webhooks konfiguriert",
+		"enabled": "Aktiviert",
+		"disabled": "Deaktiviert",
+		"test": "Testen",
+		"edit": "Bearbeiten",
+		"delete": "Löschen",
+		"deleteConfirm": "Möchten Sie diesen Webhook wirklich löschen?",
+		"testSuccess": "Webhook-Test erfolgreich",
+		"testFailed": "Webhook-Test fehlgeschlagen",
+		"created": "Webhook erfolgreich erstellt",
+		"updated": "Webhook erfolgreich aktualisiert",
+		"deleted": "Webhook erfolgreich gelöscht",
+		"allFields": "Alle Felder",
+		"hideFormTitle": "Formulartitel versteckt",
+		"hideSlug": "Slug versteckt",
+		"events": {
+			"submission": {
+				"created": "Neue Einreichung",
+				"deleted": "Einreichung gelöscht"	
+			}
+		},
+		"form": {
+			"url": "Webhook URL",
+			"urlPlaceholder": "https://example.com/webhook",
+			"urlHint": "Unterstützt auch Discord Webhook URLs",
+			"secret": "Secret",
+			"secretPlaceholder": "Secret eingeben oder generieren",
+			"secretPlaceholderEdit": "Leer lassen um aktuelles Secret zu behalten",
+			"secretHint": "Für HMAC-Signaturverifizierung (optional)",
+			"generatedSecret": "Generiertes Secret",
+			"generate": "Generieren",
+			"events": "Events",
+			"headers": "Benutzerdefinierte Header",
+			"headerKey": "Header-Name",
+			"headerValue": "Header-Wert",
+			"enabled": "Aktiviert",
+			"create": "Webhook erstellen",
+			"discordConfig": "Discord Einstellungen",
+			"discordCustomTitle": "Eigener Titel",
+			"discordCustomTitlePlaceholder": "Leer lassen für Standardtitel",
+			"discordShowFormTitle": "Formulartitel anzeigen",
+			"discordShowSlug": "Formular-Slug anzeigen",
+			"discordFields": "Anzuzeigende Felder",
+			"discordFieldsHint": "Leer lassen um alle Felder anzuzeigen. Fügen Sie Feldnamen hinzu um zu filtern.",
+			"discordFieldsHintSelect": "Wählen Sie die anzuzeigenden Felder aus. Leer lassen um alle Felder anzuzeigen.",
+			"discordFieldPlaceholder": "Feldname (z.B. email)"
+		},
+		"global": {
+			"title": "Globale Webhooks",
+			"description": "Globale Webhooks werden für alle Formulareinreichungen ausgelöst"
 		}
 	}
 }

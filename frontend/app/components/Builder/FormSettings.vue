@@ -12,7 +12,7 @@ const props = defineProps<{
 
 const emit = defineEmits(["update:form", "update:passwordEnabled", "update:passwordInput", "slugInput", "copyLink", "markDirty"]);
 
-const activeTab = ref<"general" | "design" | "access">("general");
+const activeTab = ref<"general" | "design" | "access" | "webhooks">("general");
 const showPassword = ref(false);
 const toastStore = useToastStore();
 
@@ -101,6 +101,13 @@ const handleCopyLink = async () => {
 			>
 				<UISysIcon icon="fa-solid fa-link" />
 				<span>{{ $t("builder.formSettings.tabs.access") }}</span>
+			</button>
+			<button
+				:class="['tab', { 'tab-active': activeTab === 'webhooks' }]"
+				@click="activeTab = 'webhooks'"
+			>
+				<UISysIcon icon="fa-solid fa-bolt" />
+				<span>{{ $t("builder.formSettings.tabs.webhooks") }}</span>
 			</button>
 		</nav>
 
@@ -573,6 +580,11 @@ const handleCopyLink = async () => {
 						</div>
 					</div>
 				</div>
+			</div>
+
+			<!-- Webhooks Tab -->
+			<div v-if="activeTab === 'webhooks'" class="tab-content">
+				<WebhooksWebhookList :form-id="form.id" :form-fields="form.fields" />
 			</div>
 		</div>
 	</div>

@@ -69,7 +69,12 @@
 			"general": "General",
 			"design": "Design",
 			"footer": "Footer Links",
-			"users": "Users"
+			"users": "Users",
+			"webhooks": "Webhooks"
+		},
+		"webhooks": {
+			"title": "Global Webhooks",
+			"description": "Global webhooks are triggered for all form submissions across your application."
 		},
 		"general": {
 			"application": "Application",
@@ -223,7 +228,8 @@
 			"noChangesMessage": "There are no unsaved changes",
 			"tabs": {
 				"designer": "Designer",
-				"settings": "Settings"
+				"settings": "Settings",
+				"responses": "Responses"
 			},
 			"preview": "Preview",
 			"save": "Save",
@@ -341,7 +347,8 @@
 			"tabs": {
 				"general": "General",
 				"design": "Design",
-				"access": "Link & Access"
+				"access": "Link & Access",
+				"webhooks": "Webhooks"
 			},
 			"form": "Form",
 			"buttonText": "Button text",
@@ -630,6 +637,65 @@
 		"image": {
 			"label": "Image",
 			"description": "Insert image"
+		}
+	},
+	"webhooks": {
+		"loadError" : "Webhooks could not be loaded",
+		"title": "Webhooks",
+		"add": "Add Webhook",
+		"addFirst": "Add your first webhook",
+		"addTitle": "Add Webhook",
+		"editTitle": "Edit Webhook",
+		"empty": "No webhooks configured",
+		"enabled": "Enabled",
+		"disabled": "Disabled",
+		"test": "Test",
+		"edit": "Edit",
+		"delete": "Delete",
+		"deleteConfirm": "Are you sure you want to delete this webhook?",
+		"testSuccess": "Webhook test successful",
+		"testFailed": "Webhook test failed",
+		"created": "Webhook created successfully",
+		"updated": "Webhook updated successfully",
+		"deleted": "Webhook deleted successfully",
+		"allFields": "All fields",
+		"hideFormTitle": "Form title hidden",
+		"hideSlug": "Slug hidden",
+		"events": {
+			"submission": {
+				"created": "New submission",
+				"deleted": "Submission deleted"	
+			}
+		},
+		"form": {
+			"url": "Webhook URL",
+			"urlPlaceholder": "https://example.com/webhook",
+			"urlHint": "Also supports Discord webhook URLs",
+			"secret": "Secret",
+			"secretPlaceholder": "Enter or generate a secret",
+			"secretPlaceholderEdit": "Leave empty to keep current secret",
+			"secretHint": "Used for HMAC signature verification (optional)",
+			"generatedSecret": "Generated Secret",
+			"generate": "Generate",
+			"events": "Events",
+			"headers": "Custom Headers",
+			"headerKey": "Header name",
+			"headerValue": "Header value",
+			"enabled": "Enabled",
+			"create": "Create Webhook",
+			"discordConfig": "Discord Settings",
+			"discordCustomTitle": "Custom Title",
+			"discordCustomTitlePlaceholder": "Leave empty for default title",
+			"discordShowFormTitle": "Show form title",
+			"discordShowSlug": "Show form slug",
+			"discordFields": "Fields to display",
+			"discordFieldsHint": "Leave empty to show all fields. Add specific field names to filter.",
+			"discordFieldsHintSelect": "Select which fields to display. Leave all unchecked to show all fields.",
+			"discordFieldPlaceholder": "Field name (e.g., email)"
+		},
+		"global": {
+			"title": "Global Webhooks",
+			"description": "Global webhooks are triggered for all form submissions"
 		}
 	}
 }

@@ -212,6 +212,54 @@ export const useApi = () => {
 			}),
 	};
 
+	// Webhook API for form-specific webhooks
+	const webhooksApi = {
+		// Form-specific webhooks
+		listForForm: (formId: string): Promise<Webhook[]> => request(`/forms/${formId}/webhooks`),
+		createForForm: (formId: string, webhook: CreateWebhookRequest): Promise<{ webhook: Webhook; secret: string }> =>
+			request(`/forms/${formId}/webhooks`, {
+				method: "POST",
+				body: JSON.stringify(webhook),
+			}),
+		getForForm: (formId: string, webhookId: string): Promise<Webhook> => request(`/forms/${formId}/webhooks/${webhookId}`),
+		updateForForm: (formId: string, webhookId: string, webhook: UpdateWebhookRequest): Promise<Webhook> =>
+			request(`/forms/${formId}/webhooks/${webhookId}`, {
+				method: "PUT",
+				body: JSON.stringify(webhook),
+			}),
+		deleteForForm: (formId: string, webhookId: string): Promise<void> =>
+			request(`/forms/${formId}/webhooks/${webhookId}`, {
+				method: "DELETE",
+			}),
+		testForForm: (formId: string, webhookId: string): Promise<WebhookTestResult> =>
+			request(`/forms/${formId}/webhooks/${webhookId}/test`, {
+				method: "POST",
+			}),
+		getLogsForForm: (formId: string, webhookId: string): Promise<WebhookLog[]> => request(`/forms/${formId}/webhooks/${webhookId}/logs`),
+
+		// Global webhooks (admin only)
+		listGlobal: (): Promise<Webhook[]> => request("/webhooks"),
+		createGlobal: (webhook: CreateWebhookRequest): Promise<{ webhook: Webhook; secret: string }> =>
+			request("/webhooks", {
+				method: "POST",
+				body: JSON.stringify(webhook),
+			}),
+		getGlobal: (webhookId: string): Promise<Webhook> => request(`/webhooks/${webhookId}`),
+		updateGlobal: (webhookId: string, webhook: UpdateWebhookRequest): Promise<Webhook> =>
+			request(`/webhooks/${webhookId}`, {
+				method: "PUT",
+				body: JSON.stringify(webhook),
+			}),
+		deleteGlobal: (webhookId: string): Promise<void> =>
+			request(`/webhooks/${webhookId}`, {
+				method: "DELETE",
+			}),
+		testGlobal: (webhookId: string): Promise<WebhookTestResult> =>
+			request(`/webhooks/${webhookId}/test`, {
+				method: "POST",
+			}),
+	};
+
 	const uploadApi = {
 		uploadImage: async (file: File): Promise<UploadResult> => {
 			const token = getToken();
@@ -257,5 +305,6 @@ export const useApi = () => {
 		usersApi,
 		filesApi,
 		uploadApi,
+		webhooksApi,
 	};
 };

@@ -263,6 +263,13 @@ const updateFormFromSettings = (updatedForm: Form) => {
 					<UISysIcon icon="fa-solid fa-gear" />
 					<span>{{ $t("forms.editor.tabs.settings") }}</span>
 				</button>
+				<NuxtLink
+					:to="`/forms/${id}/responses`"
+					class="header-tab"
+				>
+					<UISysIcon icon="fa-solid fa-chart-simple" />
+					<span>{{ $t("forms.editor.tabs.responses") }}</span>
+				</NuxtLink>
 			</nav>
 
 			<div class="header-right">

@@ -269,3 +269,65 @@ export interface UploadResult {
 	size: number;
 	mimeType: string;
 }
+
+// Webhook types
+export type WebhookEvent = "submission.created" | "submission.deleted";
+
+export interface DiscordConfig {
+	show_form_title: boolean;
+	show_slug: boolean;
+	fields: string[]; // Field names to include (empty = all)
+	custom_title: string; // Custom embed title (optional)
+}
+
+export interface Webhook {
+	id: string;
+	form_id?: string; // undefined = global webhook
+	url: string;
+	events: WebhookEvent[];
+	headers?: Record<string, string>;
+	discord_config?: DiscordConfig;
+	enabled: boolean;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface WebhookWithSecret extends Webhook {
+	secret: string;
+}
+
+export interface CreateWebhookRequest {
+	url: string;
+	secret?: string;
+	events: WebhookEvent[];
+	headers?: Record<string, string>;
+	discord_config?: DiscordConfig;
+	enabled: boolean;
+}
+
+export interface UpdateWebhookRequest {
+	url?: string;
+	secret?: string;
+	events?: WebhookEvent[];
+	headers?: Record<string, string>;
+	discord_config?: DiscordConfig;
+	enabled?: boolean;
+}
+
+export interface WebhookTestResult {
+	success: boolean;
+	status_code: number;
+	response_body: string;
+	error?: string;
+}
+
+export interface WebhookLog {
+	id: string;
+	webhook_id: string;
+	event: string;
+	response_code: number;
+	success: boolean;
+	attempt: number;
+	error?: string;
+	created_at: string;
+}

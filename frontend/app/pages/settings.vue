@@ -19,7 +19,7 @@ const availableLocales = computed(() =>
 );
 
 // Active tab
-const activeTab = ref<"general" | "design" | "footer" | "users">("general");
+const activeTab = ref<"general" | "design" | "footer" | "users" | "webhooks">("general");
 
 // Settings state
 const settings = ref<Settings | null>(null);
@@ -359,6 +359,10 @@ onMounted(() => {
 					<button :class="['tab', { 'tab-active': activeTab === 'users' }]" @click="activeTab = 'users'">
 						<UISysIcon icon="fa-solid fa-users" />
 						<span>{{ $t("settings.tabs.users") }}</span>
+					</button>
+					<button :class="['tab', { 'tab-active': activeTab === 'webhooks' }]" @click="activeTab = 'webhooks'">
+						<UISysIcon icon="fa-solid fa-bolt" />
+						<span>{{ $t("settings.tabs.webhooks") }}</span>
 					</button>
 				</nav>
 			</div>
@@ -707,6 +711,24 @@ onMounted(() => {
 								@last="usersPagination.lastPage"
 							/>
 						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Webhooks Tab (Global) -->
+			<div v-if="activeTab === 'webhooks'" class="tab-content">
+				<div class="card">
+					<div class="card-header">
+						<div class="card-header-left">
+							<UISysIcon icon="fa-solid fa-bolt" />
+							<h2>{{ $t("settings.webhooks.title") }}</h2>
+						</div>
+					</div>
+					<div class="card-body">
+						<p class="section-description">
+							{{ $t("settings.webhooks.description") }}
+						</p>
+						<WebhooksWebhookList :is-global="true" />
 					</div>
 				</div>
 			</div>

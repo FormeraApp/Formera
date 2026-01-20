@@ -12,15 +12,20 @@ import (
 	"formera/internal/database"
 	"formera/internal/models"
 	"formera/internal/pkg"
+	"formera/internal/services"
 	"formera/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
 
-type SubmissionHandler struct{}
+type SubmissionHandler struct {
+	webhookService *services.WebhookService
+}
 
 func NewSubmissionHandler() *SubmissionHandler {
-	return &SubmissionHandler{}
+	return &SubmissionHandler{
+		webhookService: services.NewWebhookService(database.DB),
+	}
 }
 
 type SubmitRequest struct {
@@ -147,6 +152,27 @@ func (h *SubmissionHandler) Submit(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save submission"})
 		return
 	}
+
+	// Build field labels map for webhook (ID -> Label)
+	fieldLabels := make(map[string]interface{})
+	for _, field := range form.Fields {
+		fieldLabels[field.ID] = field.Label
+	}
+
+	// Trigger webhooks asynchronously
+	go h.webhookService.TriggerEvent(models.WebhookEventSubmissionCreated, &form, map[string]interface{}{
+		"submission": map[string]interface{}{
+			"id":         submission.ID,
+			"created_at": submission.CreatedAt,
+			"data":       submission.Data,
+			"metadata": map[string]interface{}{
+				"ip":         submission.Metadata.IP,
+				"user_agent": submission.Metadata.UserAgent,
+				"referrer":   submission.Metadata.Referrer,
+			},
+		},
+		"field_labels": fieldLabels,
+	})
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message":    form.Settings.SuccessMessage,
@@ -276,6 +302,14 @@ func (h *SubmissionHandler) Delete(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete submission"})
 		return
 	}
+
+	// Trigger webhooks asynchronously
+	go h.webhookService.TriggerEvent(models.WebhookEventSubmissionDeleted, &form, map[string]interface{}{
+		"submission": map[string]interface{}{
+			"id":         submission.ID,
+			"deleted_at": time.Now(),
+		},
+	})
 
 	c.JSON(http.StatusOK, gin.H{"message": "Submission deleted successfully"})
 }

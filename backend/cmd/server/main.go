@@ -115,6 +115,7 @@ func main() {
 	setupHandler := handlers.NewSetupHandler(cfg.JWTSecret)
 	uploadHandler := handlers.NewUploadHandler(store, cfg.JWTSecret, cfg.ApiURL)
 	userHandler := handlers.NewUserHandler()
+	webhookHandler := handlers.NewWebhookHandler()
 
 	// Serve uploaded files - all files require handler (no direct static serving)
 	// This ensures consistent behavior between local and S3 storage
@@ -180,6 +181,15 @@ func main() {
 
 		// File share URL generation (authenticated)
 		protected.POST("/files/share", uploadHandler.GenerateShareURL)
+
+		// Form webhook routes
+		protected.GET("/forms/:id/webhooks", webhookHandler.ListForForm)
+		protected.POST("/forms/:id/webhooks", webhookHandler.CreateForForm)
+		protected.GET("/forms/:id/webhooks/:webhookId", webhookHandler.GetForForm)
+		protected.PUT("/forms/:id/webhooks/:webhookId", webhookHandler.UpdateForForm)
+		protected.DELETE("/forms/:id/webhooks/:webhookId", webhookHandler.DeleteForForm)
+		protected.POST("/forms/:id/webhooks/:webhookId/test", webhookHandler.TestForForm)
+		protected.GET("/forms/:id/webhooks/:webhookId/logs", webhookHandler.GetLogs)
 	}
 
 	// Admin routes (requires admin role)
@@ -197,6 +207,14 @@ func main() {
 		admin.POST("/users", userHandler.Create)
 		admin.PUT("/users/:id", userHandler.Update)
 		admin.DELETE("/users/:id", userHandler.Delete)
+
+		// Global webhook routes (admin only)
+		admin.GET("/webhooks", webhookHandler.ListGlobal)
+		admin.POST("/webhooks", webhookHandler.CreateGlobal)
+		admin.GET("/webhooks/:id", webhookHandler.GetGlobal)
+		admin.PUT("/webhooks/:id", webhookHandler.UpdateGlobal)
+		admin.DELETE("/webhooks/:id", webhookHandler.DeleteGlobal)
+		admin.POST("/webhooks/:id/test", webhookHandler.TestGlobal)
 	}
 
 	// Swagger documentation endpoint
