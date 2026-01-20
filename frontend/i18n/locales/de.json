@@ -61,16 +61,17 @@
 		"title": "Einstellungen",
 		"description": "Verwalten Sie Ihre Anwendungseinstellungen",
 		"saved": "Einstellungen gespeichert",
-		"saveError": "Fehler beim Speichern",
+		"saveError": "Einstellungen konnten nicht gespeichert werden. Bitte versuchen Sie es erneut.",
 		"loadingSettings": "Einstellungen werden geladen...",
-		"loadError": "Einstellungen konnten nicht geladen werden.",
-		"noPermission": "Sie haben keine Berechtigung auf die Einstellungen zuzugreifen. Nur Administratoren können Einstellungen verwalten.",
+		"loadError": "Einstellungen konnten nicht geladen werden. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+		"noPermission": "Zugriff verweigert: Nur Administratoren können die Anwendungseinstellungen verwalten. Bitte kontaktieren Sie einen Administrator, wenn Sie Zugriff benötigen.",
 		"tabs": {
 			"general": "Allgemein",
 			"design": "Design",
 			"footer": "Footer Links",
 			"users": "Benutzer",
-			"webhooks": "Webhooks"
+			"webhooks": "Webhooks",
+			"security": "Sicherheit"
 		},
 		"webhooks": {
 			"title": "Globale Webhooks",
@@ -150,6 +151,27 @@
 			"roleHint": "Administratoren haben Zugriff auf Einstellungen und Benutzerverwaltung.",
 			"leaveEmptyToKeep": "(leer lassen um beizubehalten)",
 			"administrator": "Administrator"
+		},
+		"security": {
+			"spamProtection": "Spam-Schutz",
+			"description": "Konfigurieren Sie den mehrschichtigen Spam-Schutz für Ihre Formulare.",
+			"honeypot": "Honeypot-Schutz",
+			"honeypotDescription": "Unsichtbares Feld, das automatisierte Bots abfängt. Standardmäßig immer aktiviert.",
+			"honeypotEnabled": "Honeypot-Schutz",
+			"alwaysOn": "Immer aktiv",
+			"captcha": "CAPTCHA-Schutz",
+			"captchaDescription": "Optionale CAPTCHA-Verifizierung für zusätzlichen Spam-Schutz.",
+			"provider": "CAPTCHA-Anbieter",
+			"providerNone": "Keiner (nur Honeypot)",
+			"providerHint": "Wählen Sie einen CAPTCHA-Anbieter oder deaktivieren Sie CAPTCHA vollständig.",
+			"configuration": "Konfiguration",
+			"getDashboard": "Keys erhalten",
+			"siteKey": "Site Key (Öffentlich)",
+			"siteKeyHint": "Der öffentliche Site Key für Ihren CAPTCHA-Anbieter.",
+			"secretKeyRequired": "Secret Key erforderlich",
+			"secretKeyInstructions": "Fügen Sie den Secret Key zu Ihrer .env-Datei hinzu:",
+			"minimumScore": "Minimale Punktzahl",
+			"minimumScoreHint": "reCAPTCHA v3 gibt eine Punktzahl von 0.0 (Bot) bis 1.0 (Mensch) zurück. Niedrigere Werte sind strenger."
 		}
 	},
 	"forms": {
@@ -477,7 +499,10 @@
 		"uploadErrorMessage": "Das Bild konnte nicht hochgeladen werden. Bitte versuchen Sie es erneut.",
 		"sizeError": "Datei zu groß",
 		"sizeErrorMessage": "Die Datei überschreitet die maximale Größe von {size}MB.",
-		"invalidFileType": "Ungültiger Dateityp"
+		"invalidFileType": "Ungültiger Dateityp",
+		"createNew": "Neues Formular erstellen",
+		"templateUsed": "Vorlage wurde erfolgreich verwendet",
+		"required": "Erforderlich"
 	},
 	"toast": {
 		"close": "Schließen",
@@ -731,5 +756,35 @@
 			"title": "Globale Webhooks",
 			"description": "Globale Webhooks werden für alle Formulareinreichungen ausgelöst"
 		}
+	},
+	"templates": {
+		"title": "Vorlagen",
+		"browse": "Vorlagen durchsuchen",
+		"useTemplate": "Vorlage verwenden",
+		"categories": {
+			"all": "Alle Vorlagen",
+			"contact": "Kontakt",
+			"feedback": "Feedback",
+			"survey": "Umfrage",
+			"registration": "Registrierung",
+			"application": "Bewerbung",
+			"newsletter": "Newsletter",
+			"quote": "Angebot",
+			"support": "Support",
+			"booking": "Buchung",
+			"order": "Bestellung",
+			"complaint": "Beschwerde",
+			"suggestion": "Vorschlag"
+		},
+		"createFrom": "Aus Vorlage erstellen",
+		"blankForm": "Leeres Formular",
+		"blankFormDesc": "Von Grund auf neu beginnen",
+		"fromTemplate": "Aus Vorlage",
+		"fromTemplateDesc": "Vorgefertigte Vorlage verwenden",
+		"preview": "Vorschau",
+		"fields": "{count} Felder | {count} Feld | {count} Felder",
+		"search": "Vorlagen durchsuchen...",
+		"noResults": "Keine Vorlagen gefunden",
+		"loading": "Vorlagen werden geladen..."
 	}
 }

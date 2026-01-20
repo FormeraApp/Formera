@@ -1,3 +1,5 @@
+import type { FormTemplate, TemplateCategoryInfo } from "~~/shared/types";
+
 export const getFileUrl = (pathOrUrl: string | undefined | null): string => {
 	if (!pathOrUrl) return "";
 
@@ -44,7 +46,11 @@ export const useApi = () => {
 
 		if (!response.ok) {
 			const error = await response.json().catch(() => ({ error: "Request failed" }));
-			throw new Error(error.error || "Request failed");
+			// Create error with status code information
+			const errorMessage = error.error || "Request failed";
+			const err = new Error(errorMessage);
+			(err as any).status = response.status;
+			throw err;
 		}
 
 		return response.json();
@@ -105,11 +111,31 @@ export const useApi = () => {
 	};
 
 	const submissionsApi = {
-		submit: (formId: string, formData: Record<string, unknown>, metadata?: Record<string, string>): Promise<{ message: string; submission: Submission }> =>
-			request(`/public/forms/${formId}/submit`, {
+		submit: (
+			formId: string,
+			formData: Record<string, unknown>,
+			metadata?: Record<string, string>,
+			honeypotField?: string,
+			captchaToken?: string
+		): Promise<{ message: string; submission: Submission }> => {
+			const payload: any = {
+				data: formData,
+				_formera_hp: honeypotField || "",
+			};
+
+			// Only add optional fields if they have values
+			if (metadata && Object.keys(metadata).length > 0) {
+				payload.metadata = metadata;
+			}
+			if (captchaToken) {
+				payload.captcha_token = captchaToken;
+			}
+
+			return request(`/public/forms/${formId}/submit`, {
 				method: "POST",
-				body: JSON.stringify({ data: formData, metadata }),
-			}),
+				body: JSON.stringify(payload),
+			});
+		},
 		list: (formId: string, params?: PaginationParams): Promise<SubmissionsResponse> => {
 			const searchParams = new URLSearchParams();
 			if (params?.page) searchParams.append("page", params.page.toString());
@@ -296,6 +322,54 @@ export const useApi = () => {
 			}),
 	};
 
+	// Helper to get current locale safely (works during SSR)
+	const getLocale = () => {
+		try {
+			const { locale } = useI18n();
+			return locale.value;
+		} catch {
+			// Fallback for SSR or when i18n is not available
+			return "en";
+		}
+	};
+
+	const templatesApi = {
+		list: (category?: string, search?: string): Promise<FormTemplate[]> => {
+			const params = new URLSearchParams();
+			if (category && category !== "all") params.append("category", category);
+			if (search) params.append("search", search);
+			params.append("language", getLocale());
+			const query = params.toString();
+			return request(`/templates${query ? `?${query}` : ""}`);
+		},
+		categories: (): Promise<TemplateCategoryInfo[]> => {
+			const params = new URLSearchParams();
+			params.append("language", getLocale());
+			return request(`/templates/categories?${params.toString()}`);
+		},
+		get: (id: string): Promise<FormTemplate> => request(`/templates/${id}`),
+		use: (id: string, title?: string): Promise<Form> =>
+			request(`/templates/${id}/use`, {
+				method: "POST",
+				body: JSON.stringify({ title }),
+			}),
+		// Admin endpoints
+		create: (template: Partial<FormTemplate>): Promise<FormTemplate> =>
+			request("/admin/templates", {
+				method: "POST",
+				body: JSON.stringify(template),
+			}),
+		update: (id: string, template: Partial<FormTemplate>): Promise<FormTemplate> =>
+			request(`/admin/templates/${id}`, {
+				method: "PUT",
+				body: JSON.stringify(template),
+			}),
+		delete: (id: string): Promise<void> =>
+			request(`/admin/templates/${id}`, {
+				method: "DELETE",
+			}),
+	};
+
 	return {
 		authApi,
 		formsApi,
@@ -306,5 +380,6 @@ export const useApi = () => {
 		filesApi,
 		uploadApi,
 		webhooksApi,
+		templatesApi,
 	};
 };

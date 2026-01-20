@@ -14,6 +14,7 @@ import (
 	"formera/internal/handlers"
 	"formera/internal/middleware"
 	"formera/internal/pkg"
+	"formera/internal/services"
 	"formera/internal/storage"
 
 	"github.com/gin-contrib/cors"
@@ -108,14 +109,23 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
+	// Initialize spam protection services
+	captchaService := services.NewCaptchaService(
+		cfg.TurnstileSecret,
+		cfg.RecaptchaSecret,
+		cfg.HCaptchaSecret,
+	)
+	spamProtectionService := services.NewSpamProtectionService(captchaService)
+
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(cfg.JWTSecret)
 	formHandler := handlers.NewFormHandler()
-	submissionHandler := handlers.NewSubmissionHandler()
+	submissionHandler := handlers.NewSubmissionHandler(spamProtectionService)
 	setupHandler := handlers.NewSetupHandler(cfg.JWTSecret)
 	uploadHandler := handlers.NewUploadHandler(store, cfg.JWTSecret, cfg.ApiURL)
 	userHandler := handlers.NewUserHandler()
 	webhookHandler := handlers.NewWebhookHandler()
+	templateHandler := handlers.NewTemplateHandler()
 
 	// Serve uploaded files - all files require handler (no direct static serving)
 	// This ensures consistent behavior between local and S3 storage
@@ -190,6 +200,12 @@ func main() {
 		protected.DELETE("/forms/:id/webhooks/:webhookId", webhookHandler.DeleteForForm)
 		protected.POST("/forms/:id/webhooks/:webhookId/test", webhookHandler.TestForForm)
 		protected.GET("/forms/:id/webhooks/:webhookId/logs", webhookHandler.GetLogs)
+
+		// Template routes
+		protected.GET("/templates", templateHandler.List)
+		protected.GET("/templates/categories", templateHandler.Categories)
+		protected.GET("/templates/:id", templateHandler.Get)
+		protected.POST("/templates/:id/use", templateHandler.UseTemplate)
 	}
 
 	// Admin routes (requires admin role)
@@ -215,6 +231,11 @@ func main() {
 		admin.PUT("/webhooks/:id", webhookHandler.UpdateGlobal)
 		admin.DELETE("/webhooks/:id", webhookHandler.DeleteGlobal)
 		admin.POST("/webhooks/:id/test", webhookHandler.TestGlobal)
+
+		// Template management routes (admin only)
+		admin.POST("/admin/templates", templateHandler.Create)
+		admin.PUT("/admin/templates/:id", templateHandler.Update)
+		admin.DELETE("/admin/templates/:id", templateHandler.Delete)
 	}
 
 	// Swagger documentation endpoint

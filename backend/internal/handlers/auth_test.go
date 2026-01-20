@@ -138,7 +138,7 @@ func TestAuthHandler_Register_Disabled(t *testing.T) {
 
 	body := RegisterRequest{
 		Email:    "new@example.com",
-		Password: "password123",
+		Password: "Password123!",
 		Name:     "New User",
 	}
 	jsonBody, _ := json.Marshal(body)
@@ -164,7 +164,7 @@ func TestAuthHandler_Register_Success(t *testing.T) {
 
 	body := RegisterRequest{
 		Email:    "new@example.com",
-		Password: "password123",
+		Password: "Password123!",
 		Name:     "New User",
 	}
 	jsonBody, _ := json.Marshal(body)
@@ -203,7 +203,7 @@ func TestAuthHandler_Register_DuplicateEmail(t *testing.T) {
 
 	body := RegisterRequest{
 		Email:    "existing@example.com",
-		Password: "password123",
+		Password: "Password123!",
 		Name:     "New User",
 	}
 	jsonBody, _ := json.Marshal(body)

@@ -19,17 +19,18 @@ func NewSetupHandler(jwtSecret string) *SetupHandler {
 }
 
 type SetupStatusResponse struct {
-	SetupRequired      bool               `json:"setup_required"`
-	AllowRegistration  bool               `json:"allow_registration"`
-	AppName            string             `json:"app_name"`
-	FooterLinks        models.FooterLinks `json:"footer_links"`
-	PrimaryColor       string             `json:"primary_color"`
-	LogoURL            string             `json:"logo_url"`
-	LogoShowText       bool               `json:"logo_show_text"`
-	FaviconURL         string             `json:"favicon_url"`
-	LoginBackgroundURL string             `json:"login_background_url"`
-	Language           string             `json:"language"`
-	Theme              string             `json:"theme"`
+	SetupRequired      bool                         `json:"setup_required"`
+	AllowRegistration  bool                         `json:"allow_registration"`
+	AppName            string                       `json:"app_name"`
+	FooterLinks        models.FooterLinks           `json:"footer_links"`
+	PrimaryColor       string                       `json:"primary_color"`
+	LogoURL            string                       `json:"logo_url"`
+	LogoShowText       bool                         `json:"logo_show_text"`
+	FaviconURL         string                       `json:"favicon_url"`
+	LoginBackgroundURL string                       `json:"login_background_url"`
+	Language           string                       `json:"language"`
+	Theme              string                       `json:"theme"`
+	SpamProtection     models.SpamProtectionConfig `json:"spam_protection"`
 }
 
 type SetupRequest struct {
@@ -68,6 +69,7 @@ func (h *SetupHandler) GetStatus(c *gin.Context) {
 		LoginBackgroundURL: settings.LoginBackgroundURL,
 		Language:           settings.Language,
 		Theme:              settings.Theme,
+		SpamProtection:     settings.SpamProtection,
 	})
 }
 
@@ -163,16 +165,17 @@ func (h *SetupHandler) GetSettings(c *gin.Context) {
 }
 
 type UpdateSettingsRequest struct {
-	AllowRegistration  *bool               `json:"allow_registration"`
-	AppName            string              `json:"app_name"`
-	FooterLinks        *models.FooterLinks `json:"footer_links"`
-	PrimaryColor       string              `json:"primary_color"`
-	LogoURL            *string             `json:"logo_url"`
-	LogoShowText       *bool               `json:"logo_show_text"`
-	FaviconURL         *string             `json:"favicon_url"`
-	LoginBackgroundURL *string             `json:"login_background_url"`
-	Language           string              `json:"language"`
-	Theme              string              `json:"theme"`
+	AllowRegistration  *bool                        `json:"allow_registration"`
+	AppName            string                       `json:"app_name"`
+	FooterLinks        *models.FooterLinks          `json:"footer_links"`
+	PrimaryColor       string                       `json:"primary_color"`
+	LogoURL            *string                      `json:"logo_url"`
+	LogoShowText       *bool                        `json:"logo_show_text"`
+	FaviconURL         *string                      `json:"favicon_url"`
+	LoginBackgroundURL *string                      `json:"login_background_url"`
+	Language           string                       `json:"language"`
+	Theme              string                       `json:"theme"`
+	SpamProtection     *models.SpamProtectionConfig `json:"spam_protection"`
 }
 
 // UpdateSettings godoc
@@ -227,6 +230,9 @@ func (h *SetupHandler) UpdateSettings(c *gin.Context) {
 	}
 	if req.Theme != "" {
 		settings.Theme = req.Theme
+	}
+	if req.SpamProtection != nil {
+		settings.SpamProtection = *req.SpamProtection
 	}
 
 	database.DB.Save(&settings)

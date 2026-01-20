@@ -54,6 +54,11 @@ type Config struct {
 	TrustedProxies  []string // List of trusted proxy IPs/CIDRs (empty = trust all)
 	RealIPHeader    string   // Custom header for client IP (e.g., "CF-Connecting-IP", "X-Real-IP")
 
+	// Spam Protection
+	TurnstileSecret string
+	RecaptchaSecret string
+	HCaptchaSecret  string
+
 	// Storage configuration
 	Storage StorageConfig
 
@@ -143,6 +148,11 @@ func Load() (*Config, error) {
 		LogPretty:      getEnv("LOG_PRETTY", "true") == "true",
 		TrustedProxies: parseTrustedProxies(getEnv("TRUSTED_PROXIES", "")),
 		RealIPHeader:   getEnv("REAL_IP_HEADER", ""),
+
+		// Spam Protection
+		TurnstileSecret: getEnv("TURNSTILE_SECRET_KEY", ""),
+		RecaptchaSecret: getEnv("RECAPTCHA_SECRET_KEY", ""),
+		HCaptchaSecret:  getEnv("HCAPTCHA_SECRET_KEY", ""),
 
 		Storage: StorageConfig{
 			Type: getEnv("STORAGE_TYPE", ""), // auto-detect if empty

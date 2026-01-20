@@ -52,6 +52,8 @@ type Settings struct {
 	// Language and Theme
 	Language string `json:"language" gorm:"default:en"`
 	Theme    string `json:"theme" gorm:"default:system"` // "light", "dark", or "system"
+	// Spam Protection
+	SpamProtection SpamProtectionConfig `json:"spam_protection" gorm:"type:text"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -70,5 +72,6 @@ func GetDefaultSettings() *Settings {
 		LoginBackgroundURL: "",
 		Language:           "en",
 		Theme:              "system",
+		SpamProtection:     GetDefaultSpamProtectionConfig(),
 	}
 }

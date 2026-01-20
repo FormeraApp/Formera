@@ -251,8 +251,12 @@ func (s *S3Storage) GetURL(fileID string) (string, error) {
 			}
 
 			for _, obj := range page.Contents {
-				if obj.Key != nil && filepath.Base(*obj.Key)[:32] == fileID {
-					return s.getPresignedURL(*obj.Key)
+				if obj.Key != nil {
+					baseName := filepath.Base(*obj.Key)
+					// Check if filename is long enough before slicing
+					if len(baseName) >= 32 && baseName[:32] == fileID {
+						return s.getPresignedURL(*obj.Key)
+					}
 				}
 			}
 		}
@@ -281,7 +285,10 @@ func (s *S3Storage) Delete(fileID string) error {
 			}
 
 			for _, obj := range page.Contents {
-				if obj.Key != nil && filepath.Base(*obj.Key)[:32] == fileID {
+				if obj.Key != nil {
+				baseName := filepath.Base(*obj.Key)
+				// Check if filename is long enough before slicing
+				if len(baseName) >= 32 && baseName[:32] == fileID {
 					_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 						Bucket: aws.String(s.bucket),
 						Key:    obj.Key,
@@ -290,6 +297,7 @@ func (s *S3Storage) Delete(fileID string) error {
 						return fmt.Errorf("failed to delete from S3: %w", err)
 					}
 					return nil
+				}
 				}
 			}
 		}

@@ -19,18 +19,22 @@ import (
 )
 
 type SubmissionHandler struct {
-	webhookService *services.WebhookService
+	webhookService        *services.WebhookService
+	spamProtectionService *services.SpamProtectionService
 }
 
-func NewSubmissionHandler() *SubmissionHandler {
+func NewSubmissionHandler(spamProtectionService *services.SpamProtectionService) *SubmissionHandler {
 	return &SubmissionHandler{
-		webhookService: services.NewWebhookService(database.DB),
+		webhookService:        services.NewWebhookService(database.DB),
+		spamProtectionService: spamProtectionService,
 	}
 }
 
 type SubmitRequest struct {
-	Data     models.SubmissionData `json:"data" binding:"required"`
-	Metadata map[string]string     `json:"metadata,omitempty"`
+	Data          models.SubmissionData `json:"data" binding:"required"`
+	Metadata      map[string]string     `json:"metadata,omitempty"`
+	HoneypotField string                `json:"_formera_hp,omitempty"`
+	CaptchaToken  string                `json:"captcha_token,omitempty"`
 }
 
 // Submit godoc
@@ -102,6 +106,25 @@ func (h *SubmissionHandler) Submit(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Feld '%s' ist erforderlich", field.Label)})
 				return
 			}
+		}
+	}
+
+	// Spam protection checks
+	var settings models.Settings
+	if result := database.DB.First(&settings); result.Error == nil {
+		if err := h.spamProtectionService.CheckSubmission(
+			settings.SpamProtection,
+			req.HoneypotField,
+			req.CaptchaToken,
+			c.ClientIP(),
+		); err != nil {
+			pkg.LogWarn().
+				Str("form_id", formID).
+				Str("ip", c.ClientIP()).
+				Err(err).
+				Msg("Spam protection check failed")
+			c.JSON(http.StatusForbidden, gin.H{"error": "Submission rejected"})
+			return
 		}
 	}
 

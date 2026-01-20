@@ -9,9 +9,16 @@ import (
 
 	"formera/internal/models"
 	"formera/internal/pkg"
+	"formera/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
+
+// Helper function to create a spam protection service for tests (no CAPTCHA configured)
+func createTestSpamProtectionService() *services.SpamProtectionService {
+	captchaService := services.NewCaptchaService("", "", "") // Empty secrets = no CAPTCHA
+	return services.NewSpamProtectionService(captchaService)
+}
 
 func TestSubmissionHandler_Submit(t *testing.T) {
 	db := pkg.SetupTestDB(t)
@@ -30,7 +37,7 @@ func TestSubmissionHandler_Submit(t *testing.T) {
 	}
 	db.Create(form)
 
-	handler := NewSubmissionHandler()
+	handler := NewSubmissionHandler(createTestSpamProtectionService())
 	router := gin.New()
 	router.POST("/public/forms/:id/submit", handler.Submit)
 
@@ -75,7 +82,7 @@ func TestSubmissionHandler_Submit_RequiredFieldMissing(t *testing.T) {
 	}
 	db.Create(form)
 
-	handler := NewSubmissionHandler()
+	handler := NewSubmissionHandler(createTestSpamProtectionService())
 	router := gin.New()
 	router.POST("/public/forms/:id/submit", handler.Submit)
 
@@ -106,7 +113,7 @@ func TestSubmissionHandler_Submit_FormNotPublished(t *testing.T) {
 	}
 	db.Create(form)
 
-	handler := NewSubmissionHandler()
+	handler := NewSubmissionHandler(createTestSpamProtectionService())
 	router := gin.New()
 	router.POST("/public/forms/:id/submit", handler.Submit)
 
@@ -143,7 +150,7 @@ func TestSubmissionHandler_Submit_MaxSubmissionsReached(t *testing.T) {
 	// Create existing submission
 	db.Create(&models.Submission{FormID: form.ID, Data: map[string]interface{}{}})
 
-	handler := NewSubmissionHandler()
+	handler := NewSubmissionHandler(createTestSpamProtectionService())
 	router := gin.New()
 	router.POST("/public/forms/:id/submit", handler.Submit)
 
@@ -177,7 +184,7 @@ func TestSubmissionHandler_Submit_SanitizesXSS(t *testing.T) {
 	}
 	db.Create(form)
 
-	handler := NewSubmissionHandler()
+	handler := NewSubmissionHandler(createTestSpamProtectionService())
 	router := gin.New()
 	router.POST("/public/forms/:id/submit", handler.Submit)
 
@@ -220,7 +227,7 @@ func TestSubmissionHandler_List(t *testing.T) {
 	db.Create(&models.Submission{FormID: form.ID, Data: map[string]interface{}{"field1": "value1"}})
 	db.Create(&models.Submission{FormID: form.ID, Data: map[string]interface{}{"field1": "value2"}})
 
-	handler := NewSubmissionHandler()
+	handler := NewSubmissionHandler(createTestSpamProtectionService())
 	router := gin.New()
 	router.GET("/forms/:id/submissions", func(c *gin.Context) {
 		c.Set("user_id", user.ID)
@@ -245,7 +252,7 @@ func TestSubmissionHandler_List_WrongUser(t *testing.T) {
 	form := &models.Form{UserID: owner.ID, Title: "Test Form", Status: models.FormStatusPublished}
 	db.Create(form)
 
-	handler := NewSubmissionHandler()
+	handler := NewSubmissionHandler(createTestSpamProtectionService())
 	router := gin.New()
 	router.GET("/forms/:id/submissions", func(c *gin.Context) {
 		c.Set("user_id", otherUser.ID) // Different user
@@ -272,7 +279,7 @@ func TestSubmissionHandler_Delete(t *testing.T) {
 	submission := &models.Submission{FormID: form.ID, Data: map[string]interface{}{"field1": "value1"}}
 	db.Create(submission)
 
-	handler := NewSubmissionHandler()
+	handler := NewSubmissionHandler(createTestSpamProtectionService())
 	router := gin.New()
 	router.DELETE("/forms/:id/submissions/:submissionId", func(c *gin.Context) {
 		c.Set("user_id", user.ID)
@@ -315,7 +322,7 @@ func TestSubmissionHandler_Stats(t *testing.T) {
 	db.Create(&models.Submission{FormID: form.ID, Data: map[string]interface{}{"rating": "good"}})
 	db.Create(&models.Submission{FormID: form.ID, Data: map[string]interface{}{"rating": "bad"}})
 
-	handler := NewSubmissionHandler()
+	handler := NewSubmissionHandler(createTestSpamProtectionService())
 	router := gin.New()
 	router.GET("/forms/:id/stats", func(c *gin.Context) {
 		c.Set("user_id", user.ID)
@@ -358,7 +365,7 @@ func TestSubmissionHandler_Stats_ConversionRate(t *testing.T) {
 		db.Create(&models.Submission{FormID: form.ID, Data: map[string]interface{}{}})
 	}
 
-	handler := NewSubmissionHandler()
+	handler := NewSubmissionHandler(createTestSpamProtectionService())
 	router := gin.New()
 	router.GET("/forms/:id/stats", func(c *gin.Context) {
 		c.Set("user_id", user.ID)
@@ -390,5 +397,200 @@ func TestSubmissionHandler_Stats_ConversionRate(t *testing.T) {
 	conversionRate := response["conversion_rate"].(float64)
 	if conversionRate != 10.0 {
 		t.Errorf("expected 10%% conversion rate, got %v%%", conversionRate)
+	}
+}
+
+// SPAM PROTECTION INTEGRATION TESTS
+
+func TestSubmissionHandler_SpamProtection_HoneypotFilled(t *testing.T) {
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+
+	// Settings are already initialized by SetupTestDB
+
+	form := &models.Form{
+		UserID: user.ID,
+		Title:  "Test Form",
+		Status: models.FormStatusPublished,
+		Fields: models.FormFields{
+			{ID: "field1", Label: "Field 1", Type: "text", Required: true},
+		},
+	}
+	db.Create(form)
+
+	handler := NewSubmissionHandler(createTestSpamProtectionService())
+	router := gin.New()
+	router.POST("/public/forms/:id/submit", handler.Submit)
+
+	body := SubmitRequest{
+		Data: map[string]interface{}{
+			"field1": "test value",
+		},
+		HoneypotField: "bot-filled-this", // Honeypot filled = spam
+	}
+	jsonBody, _ := json.Marshal(body)
+
+	req := httptest.NewRequest(http.MethodPost, "/public/forms/"+form.ID+"/submit", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	// Should be rejected as spam
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected status %d (Forbidden), got %d: %s", http.StatusForbidden, w.Code, w.Body.String())
+	}
+
+	// Verify no submission was created
+	var count int64
+	db.Model(&models.Submission{}).Where("form_id = ?", form.ID).Count(&count)
+	if count != 0 {
+		t.Errorf("expected 0 submissions, got %d", count)
+	}
+}
+
+func TestSubmissionHandler_SpamProtection_HoneypotEmpty(t *testing.T) {
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+
+	// Settings are already initialized by SetupTestDB
+
+	form := &models.Form{
+		UserID: user.ID,
+		Title:  "Test Form",
+		Status: models.FormStatusPublished,
+		Fields: models.FormFields{
+			{ID: "field1", Label: "Field 1", Type: "text", Required: true},
+		},
+		Settings: models.FormSettings{
+			SuccessMessage: "Thank you!",
+		},
+	}
+	db.Create(form)
+
+	handler := NewSubmissionHandler(createTestSpamProtectionService())
+	router := gin.New()
+	router.POST("/public/forms/:id/submit", handler.Submit)
+
+	body := SubmitRequest{
+		Data: map[string]interface{}{
+			"field1": "test value",
+		},
+		HoneypotField: "", // Empty honeypot = legitimate
+	}
+	jsonBody, _ := json.Marshal(body)
+
+	req := httptest.NewRequest(http.MethodPost, "/public/forms/"+form.ID+"/submit", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	// Should succeed
+	if w.Code != http.StatusCreated {
+		t.Errorf("expected status %d, got %d: %s", http.StatusCreated, w.Code, w.Body.String())
+	}
+
+	// Verify submission was created
+	var count int64
+	db.Model(&models.Submission{}).Where("form_id = ?", form.ID).Count(&count)
+	if count != 1 {
+		t.Errorf("expected 1 submission, got %d", count)
+	}
+}
+
+func TestSubmissionHandler_SpamProtection_CaptchaRequired_NoToken(t *testing.T) {
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+
+	// Update existing settings to enable CAPTCHA
+	var settings models.Settings
+	db.First(&settings)
+	settings.SpamProtection.CaptchaProvider = models.CaptchaProviderTurnstile
+	settings.SpamProtection.TurnstileSiteKey = "test-site-key"
+	db.Save(&settings)
+
+	form := &models.Form{
+		UserID: user.ID,
+		Title:  "Test Form",
+		Status: models.FormStatusPublished,
+		Fields: models.FormFields{
+			{ID: "field1", Label: "Field 1", Type: "text", Required: true},
+		},
+	}
+	db.Create(form)
+
+	handler := NewSubmissionHandler(createTestSpamProtectionService())
+	router := gin.New()
+	router.POST("/public/forms/:id/submit", handler.Submit)
+
+	body := SubmitRequest{
+		Data: map[string]interface{}{
+			"field1": "test value",
+		},
+		HoneypotField: "",
+		// Missing CaptchaToken
+	}
+	jsonBody, _ := json.Marshal(body)
+
+	req := httptest.NewRequest(http.MethodPost, "/public/forms/"+form.ID+"/submit", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	// Should be rejected (CAPTCHA required but not provided)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected status %d (Forbidden), got %d: %s", http.StatusForbidden, w.Code, w.Body.String())
+	}
+
+	// Verify no submission was created
+	var count int64
+	db.Model(&models.Submission{}).Where("form_id = ?", form.ID).Count(&count)
+	if count != 0 {
+		t.Errorf("expected 0 submissions, got %d", count)
+	}
+}
+
+func TestSubmissionHandler_SpamProtection_NoSettings(t *testing.T) {
+	db := pkg.SetupTestDB(t)
+	user := pkg.CreateTestUser(t, db, "test@example.com", "password123", models.RoleUser)
+
+	// Don't create settings - test graceful handling
+
+	form := &models.Form{
+		UserID: user.ID,
+		Title:  "Test Form",
+		Status: models.FormStatusPublished,
+		Fields: models.FormFields{
+			{ID: "field1", Label: "Field 1", Type: "text", Required: true},
+		},
+		Settings: models.FormSettings{
+			SuccessMessage: "Thank you!",
+		},
+	}
+	db.Create(form)
+
+	handler := NewSubmissionHandler(createTestSpamProtectionService())
+	router := gin.New()
+	router.POST("/public/forms/:id/submit", handler.Submit)
+
+	body := SubmitRequest{
+		Data: map[string]interface{}{
+			"field1": "test value",
+		},
+		HoneypotField: "",
+	}
+	jsonBody, _ := json.Marshal(body)
+
+	req := httptest.NewRequest(http.MethodPost, "/public/forms/"+form.ID+"/submit", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	// Should allow submission (graceful fallback when settings don't exist)
+	if w.Code != http.StatusCreated {
+		t.Errorf("expected status %d, got %d: %s", http.StatusCreated, w.Code, w.Body.String())
 	}
 }

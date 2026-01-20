@@ -18,6 +18,23 @@ const (
 	FormStatusClosed    FormStatus = "closed"
 )
 
+type TemplateCategory string
+
+const (
+	TemplateCategoryContact      TemplateCategory = "contact"
+	TemplateCategoryFeedback     TemplateCategory = "feedback"
+	TemplateCategorySurvey       TemplateCategory = "survey"
+	TemplateCategoryRegistration TemplateCategory = "registration"
+	TemplateCategoryApplication  TemplateCategory = "application"
+	TemplateCategoryNewsletter   TemplateCategory = "newsletter"
+	TemplateCategoryQuote        TemplateCategory = "quote"
+	TemplateCategorySupport      TemplateCategory = "support"
+	TemplateCategoryBooking      TemplateCategory = "booking"
+	TemplateCategoryOrder        TemplateCategory = "order"
+	TemplateCategoryComplaint    TemplateCategory = "complaint"
+	TemplateCategorySuggestion   TemplateCategory = "suggestion"
+)
+
 type FieldType string
 
 const (
@@ -189,6 +206,10 @@ type Form struct {
 	Fields      FormFields   `json:"fields" gorm:"type:json"`
 	Settings    FormSettings `json:"settings" gorm:"type:json"`
 	Status      FormStatus   `json:"status" gorm:"default:draft"`
+	// Template fields
+	IsTemplate       bool   `json:"is_template" gorm:"default:false;index"`
+	TemplateCategory string `json:"template_category,omitempty" gorm:"size:50"`
+	Language         string `json:"language,omitempty" gorm:"size:10;index"` // ISO 639-1 code (de, en, etc.)
 	// Password protection
 	PasswordProtected bool   `json:"password_protected" gorm:"default:false"`
 	PasswordHash      string `json:"-" gorm:"size:255"` // Never expose hash in JSON

@@ -94,7 +94,7 @@ func TestUserHandler_Create(t *testing.T) {
 
 	body := CreateUserRequest{
 		Email:    "new@example.com",
-		Password: "password123",
+		Password: "Password123!",
 		Name:     "New User",
 		Role:     models.RoleUser,
 	}
@@ -130,7 +130,7 @@ func TestUserHandler_Create_DuplicateEmail(t *testing.T) {
 
 	body := CreateUserRequest{
 		Email:    "existing@example.com",
-		Password: "password123",
+		Password: "Password123!",
 		Name:     "New User",
 		Role:     models.RoleUser,
 	}

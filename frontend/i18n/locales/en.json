@@ -61,16 +61,17 @@
 		"title": "Settings",
 		"description": "Manage your application settings",
 		"saved": "Settings saved",
-		"saveError": "Error saving settings",
+		"saveError": "Failed to save settings. Please try again.",
 		"loadingSettings": "Loading settings...",
-		"loadError": "Settings could not be loaded.",
-		"noPermission": "You don't have permission to access settings. Only administrators can manage settings.",
+		"loadError": "Failed to load settings. Please check your connection and try again.",
+		"noPermission": "Access Denied: Only administrators can manage application settings. Please contact an administrator if you need access.",
 		"tabs": {
 			"general": "General",
 			"design": "Design",
 			"footer": "Footer Links",
 			"users": "Users",
-			"webhooks": "Webhooks"
+			"webhooks": "Webhooks",
+			"security": "Security"
 		},
 		"webhooks": {
 			"title": "Global Webhooks",
@@ -150,6 +151,27 @@
 			"roleHint": "Administrators have access to settings and user management.",
 			"leaveEmptyToKeep": "(leave empty to keep)",
 			"administrator": "Administrator"
+		},
+		"security": {
+			"spamProtection": "Spam Protection",
+			"description": "Configure multi-layer spam protection for your forms.",
+			"honeypot": "Honeypot Protection",
+			"honeypotDescription": "Invisible field that catches automated bots. Always enabled by default.",
+			"honeypotEnabled": "Honeypot protection",
+			"alwaysOn": "Always on",
+			"captcha": "CAPTCHA Protection",
+			"captchaDescription": "Optional CAPTCHA verification for additional spam protection.",
+			"provider": "CAPTCHA Provider",
+			"providerNone": "None (Honeypot only)",
+			"providerHint": "Choose a CAPTCHA provider or disable CAPTCHA entirely.",
+			"configuration": "Configuration",
+			"getDashboard": "Get Keys",
+			"siteKey": "Site Key (Public)",
+			"siteKeyHint": "The public site key for your CAPTCHA provider.",
+			"secretKeyRequired": "Secret Key Required",
+			"secretKeyInstructions": "Add the secret key to your .env file:",
+			"minimumScore": "Minimum Score",
+			"minimumScoreHint": "reCAPTCHA v3 returns a score from 0.0 (bot) to 1.0 (human). Lower values are stricter."
 		}
 	},
 	"forms": {
@@ -477,7 +499,10 @@
 		"uploadErrorMessage": "The image could not be uploaded. Please try again.",
 		"sizeError": "File Too Large",
 		"sizeErrorMessage": "The file exceeds the maximum size of {size}MB.",
-		"invalidFileType": "Invalid file type"
+		"invalidFileType": "Invalid file type",
+		"createNew": "Create New Form",
+		"templateUsed": "Template used successfully",
+		"required": "Required"
 	},
 	"toast": {
 		"close": "Close",
@@ -731,5 +756,35 @@
 			"title": "Global Webhooks",
 			"description": "Global webhooks are triggered for all form submissions"
 		}
+	},
+	"templates": {
+		"title": "Templates",
+		"browse": "Browse Templates",
+		"useTemplate": "Use Template",
+		"categories": {
+			"all": "All Templates",
+			"contact": "Contact",
+			"feedback": "Feedback",
+			"survey": "Survey",
+			"registration": "Registration",
+			"application": "Application",
+			"newsletter": "Newsletter",
+			"quote": "Quote",
+			"support": "Support",
+			"booking": "Booking",
+			"order": "Order",
+			"complaint": "Complaint",
+			"suggestion": "Suggestion"
+		},
+		"createFrom": "Create from Template",
+		"blankForm": "Blank Form",
+		"blankFormDesc": "Start from scratch",
+		"fromTemplate": "From Template",
+		"fromTemplateDesc": "Use a pre-built template",
+		"preview": "Preview",
+		"fields": "{count} fields | {count} field | {count} fields",
+		"search": "Search templates...",
+		"noResults": "No templates found",
+		"loading": "Loading templates..."
 	}
 }

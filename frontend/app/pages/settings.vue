@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { FooterLink, UserRole } from "~~/shared/types";
+import type { FooterLink, UserRole, SpamProtectionConfig, CaptchaProvider } from "~~/shared/types";
 
 const { t, locale, setLocale, locales } = useI18n();
 const { settingsApi, usersApi, uploadApi } = useApi();
@@ -19,7 +19,7 @@ const availableLocales = computed(() =>
 );
 
 // Active tab
-const activeTab = ref<"general" | "design" | "footer" | "users" | "webhooks">("general");
+const activeTab = ref<"general" | "design" | "footer" | "users" | "webhooks" | "security">("general");
 
 // Settings state
 const settings = ref<Settings | null>(null);
@@ -60,6 +60,13 @@ const userForm = ref({
 const userFormError = ref<string | null>(null);
 const isSavingUser = ref(false);
 
+// Spam protection state
+const spamProtection = ref<SpamProtectionConfig>({
+	honeypot_enabled: true,
+	captcha_provider: "none",
+	recaptcha_min_score: 0.5,
+});
+
 const loadSettings = async () => {
 	try {
 		const data = await settingsApi.get();
@@ -72,11 +79,19 @@ const loadSettings = async () => {
 		loginBackgroundURL.value = data.login_background_url || "";
 		selectedLanguage.value = data.language || "en";
 		selectedTheme.value = data.theme || "system";
+		spamProtection.value = data.spam_protection || {
+			honeypot_enabled: true,
+			captcha_provider: "none",
+			recaptcha_min_score: 0.5,
+		};
 		loadError.value = null;
 	} catch (error) {
 		console.error("Failed to load settings:", error);
 		// Check if it's a permission error (403 Forbidden)
-		if (error instanceof Error && error.message.toLowerCase().includes("forbidden")) {
+		const errorMessage = error instanceof Error ? error.message.toLowerCase() : "";
+		const errorStatus = error instanceof Error ? (error as any).status : null;
+
+		if (errorStatus === 403 || errorMessage.includes("forbidden") || errorMessage.includes("admin access required")) {
 			loadError.value = "permission";
 		} else {
 			loadError.value = "generic";
@@ -121,6 +136,7 @@ const handleSave = async () => {
 			login_background_url: loginBackgroundURL.value,
 			language: selectedLanguage.value,
 			theme: selectedTheme.value,
+			spam_protection: spamProtection.value,
 		});
 		// Apply language change immediately
 		if (selectedLanguage.value !== locale.value) {
@@ -363,6 +379,10 @@ onMounted(() => {
 					<button :class="['tab', { 'tab-active': activeTab === 'webhooks' }]" @click="activeTab = 'webhooks'">
 						<UISysIcon icon="fa-solid fa-bolt" />
 						<span>{{ $t("settings.tabs.webhooks") }}</span>
+					</button>
+					<button :class="['tab', { 'tab-active': activeTab === 'security' }]" @click="activeTab = 'security'">
+						<UISysIcon icon="fa-solid fa-shield-halved" />
+						<span>{{ $t("settings.tabs.security") }}</span>
 					</button>
 				</nav>
 			</div>
@@ -730,6 +750,146 @@ onMounted(() => {
 						</p>
 						<WebhooksWebhookList :is-global="true" />
 					</div>
+				</div>
+			</div>
+
+			<!-- Security Tab (Spam Protection) -->
+			<div v-if="activeTab === 'security'" class="tab-content">
+				<div class="card">
+					<div class="card-header">
+						<UISysIcon icon="fa-solid fa-shield-halved" />
+						<h2>{{ $t("settings.security.spamProtection") }}</h2>
+					</div>
+					<div class="card-body">
+						<p class="section-description">
+							{{ $t("settings.security.description") }}
+						</p>
+
+						<!-- Honeypot Section -->
+						<div class="security-section">
+							<h3 class="security-section-title">
+								<UISysIcon icon="fa-solid fa-bug-slash" />
+								{{ $t("settings.security.honeypot") }}
+							</h3>
+							<p class="security-section-description">
+								{{ $t("settings.security.honeypotDescription") }}
+							</p>
+							<label class="toggle-label">
+								<input v-model="spamProtection.honeypot_enabled" type="checkbox" class="toggle-input" disabled />
+								<span class="toggle-switch toggle-disabled" />
+								<span class="toggle-text">{{ $t("settings.security.honeypotEnabled") }}</span>
+								<span class="badge-always-on">{{ $t("settings.security.alwaysOn") }}</span>
+							</label>
+						</div>
+
+						<!-- CAPTCHA Section -->
+						<div class="security-section">
+							<h3 class="security-section-title">
+								<UISysIcon icon="fa-solid fa-robot" />
+								{{ $t("settings.security.captcha") }}
+							</h3>
+							<p class="security-section-description">
+								{{ $t("settings.security.captchaDescription") }}
+							</p>
+
+							<div class="form-group">
+								<label class="label" for="captchaProvider">{{ $t("settings.security.provider") }}</label>
+								<select id="captchaProvider" v-model="spamProtection.captcha_provider" class="input">
+									<option value="none">{{ $t("settings.security.providerNone") }}</option>
+									<option value="turnstile">Cloudflare Turnstile</option>
+									<option value="recaptcha_v3">Google reCAPTCHA v3</option>
+									<option value="hcaptcha">hCaptcha</option>
+								</select>
+								<p class="form-hint">{{ $t("settings.security.providerHint") }}</p>
+							</div>
+
+							<!-- Turnstile Configuration -->
+							<div v-if="spamProtection.captcha_provider === 'turnstile'" class="captcha-config">
+								<div class="captcha-config-header">
+									<h4>Cloudflare Turnstile {{ $t("settings.security.configuration") }}</h4>
+									<a href="https://dash.cloudflare.com/?to=/:account/turnstile" target="_blank" rel="noopener" class="config-link">
+										<UISysIcon icon="fa-solid fa-arrow-up-right-from-square" />
+										{{ $t("settings.security.getDashboard") }}
+									</a>
+								</div>
+								<div class="form-group">
+									<label class="label" for="turnstileSiteKey">{{ $t("settings.security.siteKey") }}</label>
+									<input id="turnstileSiteKey" v-model="spamProtection.turnstile_site_key" class="input" type="text" placeholder="0x4AAAAAAxxxxxxxxxxxxxxxxxxxxxxxxx" />
+									<p class="form-hint">{{ $t("settings.security.siteKeyHint") }}</p>
+								</div>
+								<div class="alert-info">
+									<UISysIcon icon="fa-solid fa-circle-info" />
+									<div>
+										<strong>{{ $t("settings.security.secretKeyRequired") }}</strong>
+										<p>{{ $t("settings.security.secretKeyInstructions") }}</p>
+										<code>TURNSTILE_SECRET_KEY=your_secret_key_here</code>
+									</div>
+								</div>
+							</div>
+
+							<!-- reCAPTCHA v3 Configuration -->
+							<div v-if="spamProtection.captcha_provider === 'recaptcha_v3'" class="captcha-config">
+								<div class="captcha-config-header">
+									<h4>Google reCAPTCHA v3 {{ $t("settings.security.configuration") }}</h4>
+									<a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noopener" class="config-link">
+										<UISysIcon icon="fa-solid fa-arrow-up-right-from-square" />
+										{{ $t("settings.security.getDashboard") }}
+									</a>
+								</div>
+								<div class="form-group">
+									<label class="label" for="recaptchaSiteKey">{{ $t("settings.security.siteKey") }}</label>
+									<input id="recaptchaSiteKey" v-model="spamProtection.recaptcha_site_key" class="input" type="text" placeholder="6LeIxAcTAAAAAxxxxxxxxxxxxxxxxxxxxxxxxx" />
+									<p class="form-hint">{{ $t("settings.security.siteKeyHint") }}</p>
+								</div>
+								<div class="form-group">
+									<label class="label" for="recaptchaMinScore">
+										{{ $t("settings.security.minimumScore") }}: {{ spamProtection.recaptcha_min_score }}
+									</label>
+									<input id="recaptchaMinScore" v-model.number="spamProtection.recaptcha_min_score" class="input-range" type="range" min="0" max="1" step="0.1" />
+									<p class="form-hint">{{ $t("settings.security.minimumScoreHint") }}</p>
+								</div>
+								<div class="alert-info">
+									<UISysIcon icon="fa-solid fa-circle-info" />
+									<div>
+										<strong>{{ $t("settings.security.secretKeyRequired") }}</strong>
+										<p>{{ $t("settings.security.secretKeyInstructions") }}</p>
+										<code>RECAPTCHA_SECRET_KEY=your_secret_key_here</code>
+									</div>
+								</div>
+							</div>
+
+							<!-- hCaptcha Configuration -->
+							<div v-if="spamProtection.captcha_provider === 'hcaptcha'" class="captcha-config">
+								<div class="captcha-config-header">
+									<h4>hCaptcha {{ $t("settings.security.configuration") }}</h4>
+									<a href="https://dashboard.hcaptcha.com/sites" target="_blank" rel="noopener" class="config-link">
+										<UISysIcon icon="fa-solid fa-arrow-up-right-from-square" />
+										{{ $t("settings.security.getDashboard") }}
+									</a>
+								</div>
+								<div class="form-group">
+									<label class="label" for="hcaptchaSiteKey">{{ $t("settings.security.siteKey") }}</label>
+									<input id="hcaptchaSiteKey" v-model="spamProtection.hcaptcha_site_key" class="input" type="text" placeholder="00000000-0000-0000-0000-000000000000" />
+									<p class="form-hint">{{ $t("settings.security.siteKeyHint") }}</p>
+								</div>
+								<div class="alert-info">
+									<UISysIcon icon="fa-solid fa-circle-info" />
+									<div>
+										<strong>{{ $t("settings.security.secretKeyRequired") }}</strong>
+										<p>{{ $t("settings.security.secretKeyInstructions") }}</p>
+										<code>HCAPTCHA_SECRET_KEY=your_secret_key_here</code>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="actions">
+					<button :disabled="isSaving" class="btn btn-primary" @click="handleSave">
+						<UISysIcon icon="fa-solid fa-floppy-disk" />
+						{{ isSaving ? $t("common.loading") : $t("common.save") }}
+					</button>
 				</div>
 			</div>
 
@@ -1496,6 +1656,175 @@ onMounted(() => {
 	width: 100%;
 	max-width: 320px;
 	height: 120px;
+}
+
+/* Security Tab - Spam Protection */
+.security-section {
+	padding: 1.5rem;
+	margin-bottom: 1.5rem;
+	background: var(--background);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+}
+
+.security-section:last-of-type {
+	margin-bottom: 0;
+}
+
+.security-section-title {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--text);
+	margin-bottom: 0.5rem;
+}
+
+.security-section-title i {
+	color: var(--primary);
+}
+
+.security-section-description {
+	font-size: 0.875rem;
+	color: var(--text-secondary);
+	margin-bottom: 1rem;
+	line-height: 1.5;
+}
+
+.toggle-disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.badge-always-on {
+	font-size: 0.6875rem;
+	font-weight: 500;
+	padding: 0.125rem 0.375rem;
+	background: rgba(34, 197, 94, 0.1);
+	color: var(--success);
+	border-radius: var(--radius);
+	margin-left: 0.5rem;
+}
+
+.captcha-config {
+	margin-top: 1.25rem;
+	padding: 1.25rem;
+	background: var(--surface-hover);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+}
+
+.captcha-config-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 1rem;
+}
+
+.captcha-config-header h4 {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--text);
+}
+
+.config-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.375rem 0.75rem;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	color: var(--primary);
+	text-decoration: none;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	transition: all 0.15s ease;
+}
+
+.config-link:hover {
+	background: var(--background);
+	text-decoration: none;
+}
+
+.alert-info {
+	display: flex;
+	gap: 0.75rem;
+	padding: 1rem;
+	margin-top: 1rem;
+	font-size: 0.875rem;
+	color: var(--text);
+	background: rgba(59, 130, 246, 0.1);
+	border: 1px solid rgba(59, 130, 246, 0.2);
+	border-radius: var(--radius);
+}
+
+.alert-info i {
+	color: rgba(59, 130, 246, 0.8);
+	flex-shrink: 0;
+	margin-top: 0.125rem;
+}
+
+.alert-info strong {
+	display: block;
+	margin-bottom: 0.25rem;
+}
+
+.alert-info p {
+	margin: 0.5rem 0;
+	color: var(--text-secondary);
+	line-height: 1.5;
+}
+
+.alert-info code {
+	display: block;
+	padding: 0.5rem;
+	margin-top: 0.5rem;
+	font-family: monospace;
+	font-size: 0.8125rem;
+	background: var(--background);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	color: var(--primary);
+}
+
+.input-range {
+	width: 100%;
+	height: 6px;
+	background: var(--border);
+	border-radius: 3px;
+	outline: none;
+	-webkit-appearance: none;
+}
+
+.input-range::-webkit-slider-thumb {
+	appearance: none;
+	-webkit-appearance: none;
+	width: 18px;
+	height: 18px;
+	background: var(--primary);
+	border-radius: 50%;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.input-range::-webkit-slider-thumb:hover {
+	transform: scale(1.1);
+}
+
+.input-range::-moz-range-thumb {
+	width: 18px;
+	height: 18px;
+	background: var(--primary);
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.input-range::-moz-range-thumb:hover {
+	transform: scale(1.1);
 }
 
 /* Responsive */

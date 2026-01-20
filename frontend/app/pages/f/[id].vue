@@ -4,6 +4,16 @@ const { t } = useI18n();
 const { formsApi, submissionsApi } = useApi();
 const { validateField } = useFieldValidation();
 const { isFieldVisible, getHiddenFields } = useConditionalLogic();
+const {
+	loadTurnstile,
+	loadRecaptcha,
+	loadHCaptcha,
+	executeRecaptcha,
+	renderTurnstile,
+	renderHCaptcha,
+	getTurnstileResponse,
+	getHCaptchaResponse,
+} = useCaptcha();
 
 const id = route.params.id as string;
 
@@ -26,6 +36,14 @@ const passwordVerified = ref(false);
 
 // UTM/Tracking parameters
 const trackingParams = ref<Record<string, string>>({});
+
+// Spam protection
+const honeypotField = ref("");
+const spamProtectionConfig = ref<SpamProtectionConfig | null>(null);
+const captchaWidgetId = ref<string | null>(null);
+const captchaReady = ref(false);
+const turnstileContainer = ref<HTMLElement | null>(null);
+const hcaptchaContainer = ref<HTMLElement | null>(null);
 
 // Countdown state
 const countdownInterval = ref<ReturnType<typeof setInterval> | null>(null);
@@ -160,10 +178,37 @@ const loadForm = async () => {
 			}
 		});
 		formData.value = initialData;
+
+		// Load spam protection configuration
+		await loadSpamProtection();
 	} catch {
 		error.value = "Formular nicht gefunden oder nicht verfügbar.";
 	} finally {
 		isLoading.value = false;
+	}
+};
+
+const loadSpamProtection = async () => {
+	try {
+		const config = useRuntimeConfig();
+		const response = await fetch(`${config.public.apiUrl}/api/setup/status`);
+		const data = await response.json();
+		spamProtectionConfig.value = data.spam_protection;
+
+		// Load appropriate CAPTCHA script
+		if (spamProtectionConfig.value?.captcha_provider === "turnstile" && spamProtectionConfig.value.turnstile_site_key) {
+			await loadTurnstile(spamProtectionConfig.value.turnstile_site_key);
+			captchaReady.value = true;
+		} else if (spamProtectionConfig.value?.captcha_provider === "recaptcha_v3" && spamProtectionConfig.value.recaptcha_site_key) {
+			await loadRecaptcha(spamProtectionConfig.value.recaptcha_site_key);
+			captchaReady.value = true;
+		} else if (spamProtectionConfig.value?.captcha_provider === "hcaptcha" && spamProtectionConfig.value.hcaptcha_site_key) {
+			await loadHCaptcha(spamProtectionConfig.value.hcaptcha_site_key);
+			captchaReady.value = true;
+		}
+	} catch (err) {
+		console.error("Failed to load spam protection:", err);
+		// Continue without CAPTCHA - honeypot will still work
 	}
 };
 
@@ -401,6 +446,27 @@ const handleSubmit = async () => {
 			}
 		}
 
+		// Get CAPTCHA token if enabled
+		let captchaToken: string | undefined;
+
+		if (spamProtectionConfig.value?.captcha_provider === "recaptcha_v3" && spamProtectionConfig.value.recaptcha_site_key) {
+			captchaToken = await executeRecaptcha(spamProtectionConfig.value.recaptcha_site_key, "submit");
+		} else if (spamProtectionConfig.value?.captcha_provider === "turnstile" && captchaWidgetId.value) {
+			const response = getTurnstileResponse(captchaWidgetId.value);
+			if (!response) {
+				error.value = "Bitte vervollständigen Sie die CAPTCHA-Verifizierung.";
+				return;
+			}
+			captchaToken = response;
+		} else if (spamProtectionConfig.value?.captcha_provider === "hcaptcha" && captchaWidgetId.value) {
+			const response = getHCaptchaResponse(captchaWidgetId.value);
+			if (!response) {
+				error.value = "Bitte vervollständigen Sie die CAPTCHA-Verifizierung.";
+				return;
+			}
+			captchaToken = response;
+		}
+
 		// Remove data from hidden fields before submission
 		const hiddenFields = getHiddenFields(formFields.value, formData.value);
 		const cleanedFormData = { ...formData.value };
@@ -410,7 +476,13 @@ const handleSubmit = async () => {
 
 		// Include tracking parameters if present
 		const metadata = Object.keys(trackingParams.value).length > 0 ? trackingParams.value : undefined;
-		const response = await submissionsApi.submit(form.value.id, cleanedFormData, metadata);
+		const response = await submissionsApi.submit(
+			form.value.id,
+			cleanedFormData,
+			metadata,
+			honeypotField.value,
+			captchaToken
+		);
 		success.value = response.message || form.value.settings.success_message || "Vielen Dank für Ihre Antwort!";
 	} catch (err: unknown) {
 		const errorMessage = err instanceof Error ? err.message : "Fehler beim Absenden";
@@ -481,6 +553,28 @@ onMounted(() => {
 
 onUnmounted(() => {
 	stopCountdown();
+});
+
+// Render CAPTCHA widgets when ready
+watch([captchaReady, spamProtectionConfig], () => {
+	if (!captchaReady.value || !spamProtectionConfig.value) return;
+
+	nextTick(() => {
+		// Give the script time to initialize
+		setTimeout(() => {
+			if (spamProtectionConfig.value?.captcha_provider === "turnstile" && spamProtectionConfig.value.turnstile_site_key) {
+				const widgetId = renderTurnstile("turnstile-widget", spamProtectionConfig.value.turnstile_site_key);
+				if (widgetId !== null) {
+					captchaWidgetId.value = widgetId;
+				}
+			} else if (spamProtectionConfig.value?.captcha_provider === "hcaptcha" && spamProtectionConfig.value.hcaptcha_site_key) {
+				const widgetId = renderHCaptcha("hcaptcha-widget", spamProtectionConfig.value.hcaptcha_site_key);
+				if (widgetId !== null) {
+					captchaWidgetId.value = widgetId;
+				}
+			}
+		}, 100);
+	});
 });
 </script>
 
@@ -772,6 +866,34 @@ onUnmounted(() => {
 				</template>
 			</TransitionGroup>
 
+			<!-- Honeypot field (hidden from users, visible to bots) -->
+			<input
+				v-model="honeypotField"
+				type="text"
+				name="website"
+				autocomplete="off"
+				tabindex="-1"
+				style="position: absolute; left: -9999px; width: 1px; height: 1px;"
+				aria-hidden="true"
+			/>
+
+			<!-- CAPTCHA widgets -->
+			<div v-if="captchaReady && spamProtectionConfig?.captcha_provider === 'turnstile'" class="captcha-container">
+				<div
+					id="turnstile-widget"
+					ref="turnstileContainer"
+						></div>
+			</div>
+
+			<div v-if="captchaReady && spamProtectionConfig?.captcha_provider === 'hcaptcha'" class="captcha-container">
+				<div
+					id="hcaptcha-widget"
+					ref="hcaptchaContainer"
+						></div>
+			</div>
+
+			<!-- reCAPTCHA v3 is invisible - no widget needed -->
+
 			<div class="footer">
 				<div v-if="isMultiPage" class="footer-nav">
 					<button
@@ -994,6 +1116,12 @@ onUnmounted(() => {
 
 .fields {
 	padding: 1.5rem 2rem;
+}
+
+.captcha-container {
+	margin: 1.5rem 0;
+	display: flex;
+	justify-content: center;
 }
 
 .footer {

@@ -40,9 +40,48 @@ func Initialize(dbPath string) error {
 	var settings models.Settings
 	if result := DB.First(&settings); result.Error != nil {
 		DB.Create(models.GetDefaultSettings())
+	} else {
+		// Migration: Initialize spam protection config if not set
+		// Check if spam_protection is empty (for existing installations)
+		if settings.SpamProtection.CaptchaProvider == "" {
+			settings.SpamProtection = models.GetDefaultSpamProtectionConfig()
+			DB.Save(&settings)
+			log.Println("Migrated settings: initialized spam protection config")
+		}
+	}
+
+	// Seed templates if none exist
+	if err := seedTemplates(); err != nil {
+		log.Printf("Warning: Failed to seed templates: %v", err)
 	}
 
 	log.Println("Database initialized successfully")
+	return nil
+}
+
+// seedTemplates creates default form templates if they don't exist
+func seedTemplates() error {
+	var count int64
+	if err := DB.Model(&models.Form{}).Where("is_template = ?", true).Count(&count).Error; err != nil {
+		return err
+	}
+
+	if count > 0 {
+		log.Printf("Templates already exist (%d templates found), skipping seeding", count)
+		return nil
+	}
+
+	templates := getDefaultTemplates()
+	for _, tmpl := range templates {
+		// Use system user ID (you might want to create a dedicated system user)
+		tmpl.UserID = "system"
+		if err := DB.Create(&tmpl).Error; err != nil {
+			log.Printf("Failed to create template '%s': %v", tmpl.Title, err)
+			return err
+		}
+	}
+
+	log.Printf("Successfully seeded %d form templates", len(templates))
 	return nil
 }
 

@@ -1,6 +1,6 @@
 # Formera
 
-Self-hosted form builder. Privacy-friendly alternative to Google Forms.
+Self-hosted form builder. Privacy-friendly by default, with optional CAPTCHA integrations.
 
 ## Features
 
@@ -13,6 +13,9 @@ Self-hosted form builder. Privacy-friendly alternative to Google Forms.
 - Response analytics & statistics
 - CSV/JSON export
 - i18n support (German, English)
+- **Spam Protection**:
+  - Honeypot (always active, privacy-friendly)
+  - Optional CAPTCHA (Cloudflare Turnstile, Google reCAPTCHA v3, hCaptcha)
 - Docker deployment
 
 ## Tech Stack
@@ -153,6 +156,30 @@ cd frontend && yarn install && yarn dev
 | `CLEANUP_INTERVAL_HOURS` | Cleanup interval | `24` |
 | `CLEANUP_MIN_AGE_DAYS` | Minimum file age before deletion | `7` |
 | `CLEANUP_DRY_RUN` | Only log deletions, don't execute | `false` |
+
+### Spam Protection
+
+Formera includes **honeypot protection by default** (always active, no configuration needed). Optionally, you can enable CAPTCHA for additional security.
+
+**Privacy Note:** Honeypot and Cloudflare Turnstile/hCaptcha are privacy-friendly options. Google reCAPTCHA sends data to Google servers.
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key | Only if using Turnstile |
+| `RECAPTCHA_SECRET_KEY` | Google reCAPTCHA v3 secret key | Only if using reCAPTCHA |
+| `HCAPTCHA_SECRET_KEY` | hCaptcha secret key | Only if using hCaptcha |
+
+**Configuration Steps:**
+1. Add the secret key(s) to your `.env` file (only for providers you want to use)
+2. Login as admin and navigate to **Settings → Spam Protection**
+3. Select your CAPTCHA provider and enter the **site key** (public key)
+4. Configure options (e.g., reCAPTCHA minimum score)
+5. Save settings
+
+**Provider Links:**
+- [Cloudflare Turnstile](https://dash.cloudflare.com/?to=/:account/turnstile) - Free, privacy-friendly
+- [Google reCAPTCHA](https://www.google.com/recaptcha/admin) - Free, sends data to Google
+- [hCaptcha](https://dashboard.hcaptcha.com/sites) - Privacy-focused alternative
 
 ### SEO
 

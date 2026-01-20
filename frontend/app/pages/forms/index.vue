@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 const { t, locale } = useI18n();
-const { formsApi, submissionsApi } = useApi();
+const { formsApi, submissionsApi, templatesApi } = useApi();
 const router = useRouter();
+const toastStore = useToastStore();
 
 const forms = ref<Form[]>([]);
 const formStats = ref<Record<string, number>>({});
@@ -10,6 +11,10 @@ const activeMenu = ref<string | null>(null);
 const searchQuery = ref("");
 const filterStatus = ref<"all" | "draft" | "published" | "closed">("all");
 const sortBy = ref<"updated" | "created" | "title">("updated");
+
+// Template Modal States
+const showCreateModal = ref(false);
+const showTemplateGallery = ref(false);
 
 const loadForms = async () => {
 	try {
@@ -71,7 +76,11 @@ const stats = computed(() => ({
 	totalResponses: Object.values(formStats.value).reduce((sum, count) => sum + count, 0),
 }));
 
-const handleCreateForm = async () => {
+const handleCreateForm = () => {
+	showCreateModal.value = true;
+};
+
+const handleCreateBlank = async () => {
 	try {
 		const newForm = await formsApi.create({
 			title: t("forms.defaults.title"),
@@ -85,9 +94,24 @@ const handleCreateForm = async () => {
 				notify_on_submission: false,
 			},
 		});
+		showCreateModal.value = false;
 		router.push(`/forms/${newForm.id}/edit`);
 	} catch (error) {
 		console.error("Failed to create form:", error);
+		toastStore.error(t("errors.general"));
+	}
+};
+
+const handleCreateFromTemplate = async (templateId: string) => {
+	try {
+		const newForm = await templatesApi.use(templateId);
+		showTemplateGallery.value = false;
+		showCreateModal.value = false;
+		router.push(`/forms/${newForm.id}/edit`);
+		toastStore.success(t("forms.templateUsed"));
+	} catch (error) {
+		console.error("Failed to create form from template:", error);
+		toastStore.error(t("errors.general"));
 	}
 };
 
@@ -380,6 +404,20 @@ onMounted(() => {
 				</div>
 			</template>
 		</template>
+
+		<!-- Modals -->
+		<CreateFormModal
+			:show="showCreateModal"
+			@close="showCreateModal = false"
+			@blank="handleCreateBlank"
+			@template="showTemplateGallery = true; showCreateModal = false"
+		/>
+
+		<TemplateGallery
+			:show="showTemplateGallery"
+			@close="showTemplateGallery = false"
+			@select="handleCreateFromTemplate"
+		/>
 	</div>
 </template>
 

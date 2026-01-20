@@ -186,8 +186,39 @@ export interface Form {
 	settings: FormSettings;
 	status: FormStatus;
 	password_protected: boolean;
+	is_template?: boolean;
+	template_category?: string;
 	created_at: string;
 	updated_at: string;
+}
+
+// Template category types
+export type TemplateCategory =
+	| "contact"
+	| "feedback"
+	| "survey"
+	| "registration"
+	| "application"
+	| "newsletter"
+	| "quote"
+	| "support"
+	| "booking"
+	| "order"
+	| "complaint"
+	| "suggestion";
+
+// Form template interface
+export interface FormTemplate extends Form {
+	is_template: true;
+	template_category: TemplateCategory;
+}
+
+// Template category info with metadata
+export interface TemplateCategoryInfo {
+	category: TemplateCategory | "all";
+	count: number;
+	label: string;
+	icon: string;
 }
 
 // Request type for updating forms with password
@@ -264,6 +295,18 @@ export interface FooterLink {
 	url: string;
 }
 
+// Spam Protection Types
+export type CaptchaProvider = "none" | "turnstile" | "recaptcha_v3" | "hcaptcha";
+
+export interface SpamProtectionConfig {
+	honeypot_enabled: boolean;
+	captcha_provider: CaptchaProvider;
+	turnstile_site_key?: string;
+	recaptcha_site_key?: string;
+	hcaptcha_site_key?: string;
+	recaptcha_min_score: number;
+}
+
 export interface SetupStatus {
 	setup_required: boolean;
 	allow_registration: boolean;
@@ -276,6 +319,7 @@ export interface SetupStatus {
 	login_background_url: string;
 	language: string;
 	theme: "light" | "dark" | "system";
+	spam_protection: SpamProtectionConfig;
 }
 
 export interface Settings {
@@ -291,6 +335,7 @@ export interface Settings {
 	login_background_url: string;
 	language: "en" | "de";
 	theme: "light" | "dark" | "system";
+	spam_protection: SpamProtectionConfig;
 	created_at: string;
 	updated_at: string;
 }
